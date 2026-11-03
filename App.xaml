@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Application
+    x:Class="WinUIDemo.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <ResourceDictionary.ThemeDictionaries>
+                <!-- ===================== Light ===================== -->
+                <ResourceDictionary x:Key="Default">
+                    <SolidColorBrush x:Key="BrandBrush" Color="#6C4CF1" />
+                    <LinearGradientBrush x:Key="BrandGradientBrush" StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#6C4CF1" Offset="0" />
+                        <GradientStop Color="#22B8CF" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush x:Key="HeroWashBrush" StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#296C4CF1" Offset="0" />
+                        <GradientStop Color="#0A22B8CF" Offset="0.6" />
+                        <GradientStop Color="#00000000" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush x:Key="ChartLineBrush" StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="#6C4CF1" Offset="0" />
+                        <GradientStop Color="#22B8CF" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush x:Key="ChartAreaBrush" StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#4D6C4CF1" Offset="0" />
+                        <GradientStop Color="#006C4CF1" Offset="1" />
+                    </LinearGradientBrush>
+                    <SolidColorBrush x:Key="GridLineBrush" Color="#12000000" />
+                    <SolidColorBrush x:Key="SuccessBrush" Color="#0F9D58" />
+                    <SolidColorBrush x:Key="WarningBrush" Color="#B45309" />
+                    <SolidColorBrush x:Key="DangerBrush" Color="#DC2626" />
+                    <SolidColorBrush x:Key="InfoBrush" Color="#0284C7" />
+                    <SolidColorBrush x:Key="DeltaUpBackgroundBrush" Color="#1A0F9D58" />
+                    <SolidColorBrush x:Key="DeltaDownBackgroundBrush" Color="#1ADC2626" />
+                    <SolidColorBrush x:Key="IconTileBrush" Color="#146C4CF1" />
+                    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#F3F3F3" />
+                </ResourceDictionary>
+
+                <!-- ===================== Dark ===================== -->
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="BrandBrush" Color="#9B85FF" />
+                    <LinearGradientBrush x:Key="BrandGradientBrush" StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#8B6BFF" Offset="0" />
+                        <GradientStop Color="#3AD2E8" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush x:Key="HeroWashBrush" StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#3D6C4CF1" Offset="0" />
+                        <GradientStop Color="#1422B8CF" Offset="0.6" />
+                        <GradientStop Color="#00000000" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush x:Key="ChartLineBrush" StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="#9B85FF" Offset="0" />
+                        <GradientStop Color="#3AD2E8" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush x:Key="ChartAreaBrush" StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#5C8B6BFF" Offset="0" />
+                        <GradientStop Color="#008B6BFF" Offset="1" />
+                    </LinearGradientBrush>
+                    <SolidColorBrush x:Key="GridLineBrush" Color="#14FFFFFF" />
+                    <SolidColorBrush x:Key="SuccessBrush" Color="#4ADE80" />
+                    <SolidColorBrush x:Key="WarningBrush" Color="#FBBF24" />
+                    <SolidColorBrush x:Key="DangerBrush" Color="#F87171" />
+                    <SolidColorBrush x:Key="InfoBrush" Color="#38BDF8" />
+                    <SolidColorBrush x:Key="DeltaUpBackgroundBrush" Color="#264ADE80" />
+                    <SolidColorBrush x:Key="DeltaDownBackgroundBrush" Color="#26F87171" />
+                    <SolidColorBrush x:Key="IconTileBrush" Color="#1F8B6BFF" />
+                    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#1F1F1F" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
+            <!-- ===================== Cards & text ===================== -->
+            <Style x:Key="CardStyle" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="14" />
+                <Setter Property="Padding" Value="20" />
+            </Style>
+
+            <Style x:Key="PageTitleStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="28" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="15" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="StatValueStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="30" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="CaptionStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            </Style>
+
+            <Style x:Key="MetaStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorTertiaryBrush}" />
+            </Style>
+
+            <Style x:Key="BodySecondaryStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="13" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+            </Style>
+
+            <!-- Tile-like button used for quick actions -->
+            <Style x:Key="TileButtonStyle" TargetType="Button">
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="VerticalAlignment" Value="Stretch" />
+                <Setter Property="Padding" Value="16" />
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorSecondaryBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+            </Style>
+
+            <!-- Small pill / badge -->
+            <Style x:Key="BadgeStyle" TargetType="Border">
+                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="Padding" Value="7,2,7,2" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
