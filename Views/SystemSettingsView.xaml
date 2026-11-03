@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="WinUIDemo.Views.SystemSettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        每行的结构都是「文字 + 右侧控件」两列（* / Auto），右侧控件统一贴齐内容区右缘。
+        开关要写三样东西才能真的靠右：
+          1. MinWidth="0" —— 默认样式带 154 DIP 最小宽度，不去掉控件就比开关本身宽一大截；
+          2. OnContent="" / OffContent="" —— 不写的话模板会带上本地化的「开 / 关」文字，
+             把开关顶到左边去；
+          3. Margin="0,0,-12,0" —— 模板在开关列后面固定留了一列 12 DIP 的空列给文字，
+             用负边距把这截吃掉，开关轨道才和下面的下拉框 / 按钮对齐。
+    -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Padding="20,8,20,16" Spacing="10">
+
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="提高指针精度" FontSize="13.5" VerticalAlignment="Center" />
+                <ToggleSwitch x:Name="PointerPrecisionToggle" Grid.Column="1"
+                              MinWidth="0" OnContent="" OffContent="" Margin="0,0,-12,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                              Toggled="PointerPrecision_Toggled" />
+            </Grid>
+
+            <Border Height="1" Background="{ThemeResource GridLineBrush}" />
+
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="高性能电源计划" FontSize="13.5" VerticalAlignment="Center" />
+                <ToggleSwitch x:Name="HighPerformanceToggle" Grid.Column="1"
+                              MinWidth="0" OnContent="" OffContent="" Margin="0,0,-12,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                              Toggled="HighPerformance_Toggled" />
+            </Grid>
+
+            <Border Height="1" Background="{ThemeResource GridLineBrush}" />
+
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="桌面背景（图片）" FontSize="13.5" VerticalAlignment="Center" />
+                <ToggleSwitch x:Name="BackgroundToggle" Grid.Column="1"
+                              MinWidth="0" OnContent="" OffContent="" Margin="0,0,-12,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                              Toggled="Background_Toggled" />
+            </Grid>
+
+            <Border Height="1" Background="{ThemeResource GridLineBrush}" />
+
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="深色模式" FontSize="13.5" VerticalAlignment="Center" />
+                <ToggleSwitch x:Name="DarkModeToggle" Grid.Column="1"
+                              MinWidth="0" OnContent="" OffContent="" Margin="0,0,-12,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                              Toggled="DarkMode_Toggled" />
+            </Grid>
+
+            <Border Height="1" Background="{ThemeResource GridLineBrush}" />
+
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="任务栏图标靠左" FontSize="13.5" VerticalAlignment="Center" />
+                <ToggleSwitch x:Name="TaskbarLeftToggle" Grid.Column="1"
+                              MinWidth="0" OnContent="" OffContent="" Margin="0,0,-12,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                              Toggled="TaskbarLeft_Toggled" />
+            </Grid>
+
+            <Border Height="1" Background="{ThemeResource GridLineBrush}" />
+
+            <!-- 按 Alt+Tab 时显示应用中的标签页：开 = 3 个最新选项卡，关 = 不显示选项卡 -->
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="按 Alt+Tab 显示标签页" FontSize="13.5" VerticalAlignment="Center" />
+                <ToggleSwitch x:Name="AltTabTabsToggle" Grid.Column="1"
+                              MinWidth="0" OnContent="" OffContent="" Margin="0,0,-12,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                              Toggled="AltTabTabs_Toggled" />
+            </Grid>
+
+            <Border Height="1" Background="{ThemeResource GridLineBrush}" />
+
+            <!-- 应用运行通知：对应「用户账户控制设置」滑块，开 = 默认档（仅通知应用改动），关 = 最下面那档（全都不通知） -->
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="应用运行通知" FontSize="13.5" VerticalAlignment="Center" />
+                <ToggleSwitch x:Name="UacNotifyToggle" Grid.Column="1"
+                              MinWidth="0" OnContent="" OffContent="" Margin="0,0,-12,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                              Toggled="UacNotify_Toggled" />
+            </Grid>
+
+            <Border Height="1" Background="{ThemeResource GridLineBrush}" />
+
+            <!-- 关闭请勿打扰：关掉主开关与投影 / 全屏 / 功能更新后一小时，只保留玩游戏时自动开启 -->
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="关闭请勿打扰" FontSize="13.5" VerticalAlignment="Center" />
+                <ToggleSwitch x:Name="DisableDndToggle" Grid.Column="1"
+                              MinWidth="0" OnContent="" OffContent="" Margin="0,0,-12,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                              Toggled="DisableDnd_Toggled" />
+            </Grid>
+
+            <Border Height="1" Background="{ThemeResource GridLineBrush}" />
+
+            <!-- 刷新率：选项来自 EnumDisplaySettings，选中即切换 -->
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="刷新率" FontSize="13.5" VerticalAlignment="Center" />
+                <ComboBox x:Name="RefreshRateBox" Grid.Column="1" MinWidth="132"
+                          DisplayMemberPath="Label"
+                          SelectionChanged="RefreshRate_SelectionChanged" />
+            </Grid>
+
+            <Border Height="1" Background="{ThemeResource GridLineBrush}" />
+
+            <!-- 桌面图标：一个下拉，里面五项可勾选，勾选时面板不关，能连着点多选 -->
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="桌面图标" FontSize="13.5" VerticalAlignment="Center" />
+                <DropDownButton x:Name="DesktopIconButton" Grid.Column="1" MinWidth="132"
+                                HorizontalContentAlignment="Stretch">
+                    <TextBlock x:Name="DesktopIconSummary" FontSize="12.5" />
+                    <DropDownButton.Flyout>
+                        <!-- 用 Flyout + CheckBox 而不是 MenuFlyout：勾选时菜单不关，可以连着点好几个 -->
+                        <Flyout x:Name="DesktopIconFlyout" Placement="BottomEdgeAlignedRight">
+                            <StackPanel x:Name="DesktopIconPanel" Spacing="2" MinWidth="160" />
+                        </Flyout>
+                    </DropDownButton.Flyout>
+                </DropDownButton>
+            </Grid>
+
+            <Border Height="1" Background="{ThemeResource GridLineBrush}" />
+
+            <!-- 右键菜单样式：Windows 10 经典完整菜单 / Windows 11 精简菜单 -->
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="右键菜单样式" FontSize="13.5" VerticalAlignment="Center" />
+                <ComboBox x:Name="ContextMenuStyleBox" Grid.Column="1" MinWidth="132"
+                          SelectionChanged="ContextMenuStyle_SelectionChanged">
+                    <ComboBoxItem Content="Windows 10" />
+                    <ComboBoxItem Content="Windows 11" />
+                </ComboBox>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

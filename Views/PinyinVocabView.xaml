@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="WinUIDemo.Views.PinyinVocabView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Padding="20,10,20,18" Spacing="12">
+
+            <TextBlock Text="同步微软拼音整个词库目录（%APPDATA%\Microsoft\InputMethod\Chs），不动其它输入法。"
+                       Style="{StaticResource BodySecondaryStyle}" />
+
+            <Border Style="{StaticResource CardStyle}" Padding="14,12" CornerRadius="10">
+                <StackPanel Spacing="9">
+                    <Grid ColumnSpacing="14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="本机词汇" Style="{StaticResource MetaStyle}" VerticalAlignment="Center" />
+                        <TextBlock x:Name="LocalStatusText" Grid.Column="1" FontSize="12.5"
+                                   HorizontalAlignment="Right" TextWrapping="Wrap" Text="读取中…" />
+                    </Grid>
+
+                    <Border Height="1" Background="{ThemeResource GridLineBrush}" />
+
+                    <Grid ColumnSpacing="14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="云端词汇" Style="{StaticResource MetaStyle}" VerticalAlignment="Center" />
+                        <TextBlock x:Name="ServerStatusText" Grid.Column="1" FontSize="12.5"
+                                   HorizontalAlignment="Right" TextWrapping="Wrap" Text="读取中…" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- 上传：本机 → 服务器 -->
+            <Button x:Name="UploadButton" Style="{StaticResource TileButtonStyle}"
+                    Padding="14,12" Click="Upload_Click"
+                    ToolTipService.ToolTip="把本机微软拼音词汇上传到服务器">
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="34" Height="34" CornerRadius="9" Background="{ThemeResource IconTileBrush}">
+                        <FontIcon Glyph="&#xE898;" FontSize="15" Foreground="{ThemeResource BrandBrush}" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="上传到云端" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Text="把当前 Windows 词汇打包保存到服务器"
+                                   Style="{StaticResource MetaStyle}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Grid>
+            </Button>
+
+            <!-- 下载：服务器 → 本机 -->
+            <Button x:Name="ImportButton" Style="{StaticResource TileButtonStyle}"
+                    Padding="14,12" Click="Import_Click"
+                    ToolTipService.ToolTip="把服务器上的词汇导入本机">
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="34" Height="34" CornerRadius="9" Background="{ThemeResource IconTileBrush}">
+                        <FontIcon Glyph="&#xE896;" FontSize="15" Foreground="{ThemeResource BrandBrush}" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="下载到本地" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Text="从服务器取回词汇并覆盖本机词库"
+                                   Style="{StaticResource MetaStyle}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Grid>
+            </Button>
+
+            <!-- 只下载文件：不动本机输入法 -->
+            <Button x:Name="SaveButton" Style="{StaticResource TileButtonStyle}"
+                    Padding="14,12" Click="Save_Click"
+                    ToolTipService.ToolTip="把服务器上的词库存成文件，不修改本机词库">
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="34" Height="34" CornerRadius="9" Background="{ThemeResource IconTileBrush}">
+                        <FontIcon Glyph="&#xE74E;" FontSize="15" Foreground="{ThemeResource BrandBrush}" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="仅下载文件" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Text="存到「下载」文件夹，不覆盖本机词库"
+                                   Style="{StaticResource MetaStyle}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Grid>
+            </Button>
+
+            <TextBlock Text="导入前会先清空该目录的旧词库文件（子目录保留）再写回，旧词库自动备份到 Nova 数据目录；过程中会短暂重启微软拼音。"
+                       Style="{StaticResource MetaStyle}" TextWrapping="Wrap" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

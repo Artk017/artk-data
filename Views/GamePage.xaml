@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="WinUIDemo.Views.GamePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="Transparent"
+    NavigationCacheMode="Required">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                  Padding="36,18,40,32">
+        <StackPanel Spacing="16">
+            <StackPanel.ChildrenTransitions>
+                <TransitionCollection>
+                    <EntranceThemeTransition FromVerticalOffset="18" />
+                </TransitionCollection>
+            </StackPanel.ChildrenTransitions>
+
+            <!-- ============ 页头 ============ -->
+            <StackPanel Spacing="4" Margin="0,0,0,2">
+                <TextBlock Text="Game" Style="{StaticResource PageTitleStyle}" />
+            </StackPanel>
+
+            <!-- ============ 检测到的软件 ============ -->
+            <Grid Margin="2,4,2,0">
+                <TextBlock Text="检测到的软件" Style="{StaticResource SectionTitleStyle}" />
+                <TextBlock x:Name="CountText" FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </Grid>
+
+            <Grid x:Name="CardsHost" ColumnSpacing="12" RowSpacing="12">
+                <Grid.ChildrenTransitions>
+                    <TransitionCollection>
+                        <EntranceThemeTransition FromVerticalOffset="14" />
+                    </TransitionCollection>
+                </Grid.ChildrenTransitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+            </Grid>
+
+            <TextBlock x:Name="EmptyState" Visibility="Collapsed" Margin="2,4,0,0"
+                       Text="没有检测到「崩坏：星穹铁道」或「PotPlayer 64 bit」，安装后回到本页会自动出现。"
+                       TextWrapping="Wrap" Style="{StaticResource MetaStyle}" />
+        </StackPanel>
+    </ScrollViewer>
+</Page>

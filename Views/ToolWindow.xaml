@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="WinUIDemo.Views.ToolWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid x:Name="RootGrid" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.Resources>
+            <!-- 标题栏按钮：贴合标题栏高度，默认透明 -->
+            <Style x:Key="TitleBarButtonStyle" TargetType="Button">
+                <Setter Property="Width" Value="30" />
+                <Setter Property="Height" Value="26" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="CornerRadius" Value="5" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+            </Style>
+
+            <!-- 置顶按钮激活态：跟随系统强调色 -->
+            <SolidColorBrush x:Key="PinActiveBrush" Color="{ThemeResource SystemAccentColor}" />
+        </Grid.Resources>
+
+        <Grid.RowDefinitions>
+            <!-- 与系统 caption button 所在的高度带对齐，图标才会在同一水平线上 -->
+            <RowDefinition Height="32" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 标题栏：右侧留白由 RightInset 计算，避免和 最小化/关闭 叠在一起 -->
+        <Grid x:Name="TitleBar" Background="Transparent" Padding="14,0,98,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
+                        IsHitTestVisible="False">
+                <FontIcon x:Name="TitleIcon" Glyph="&#xE9D9;" FontSize="12"
+                          Foreground="{ThemeResource BrandBrush}" />
+                <TextBlock x:Name="TitleText" FontSize="12.5" FontWeight="SemiBold"
+                           VerticalAlignment="Center" />
+            </StackPanel>
+
+            <!-- 固定在最前 -->
+            <Button x:Name="PinButton" Grid.Column="1" Style="{StaticResource TitleBarButtonStyle}"
+                    VerticalAlignment="Center" Click="Pin_Click"
+                    ToolTipService.ToolTip="固定在最前">
+                <!-- 系统 caption 图标带基线偏移，上提 4 DIP（居中时实际位移一半）才能和 − □ × 齐平 -->
+                <FontIcon x:Name="PinIcon" Glyph="&#xE718;" FontSize="12" Margin="0,-4,0,0" />
+            </Button>
+        </Grid>
+
+        <ContentPresenter x:Name="Host" Grid.Row="1" />
+    </Grid>
+</Window>
