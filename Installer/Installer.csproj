@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <AssemblyName>NovaSetup</AssemblyName>
+    <RootNamespace>NovaSetup</RootNamespace>
+    <ApplicationIcon>..\Assets\app.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <!-- 关掉 WinForms 的自动源码生成依赖，保持简单 -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 内嵌 Velopack 生成的 Setup.exe，运行时释放到临时目录再执行 -->
+    <EmbeddedResource Include="payload\ArtkTools-win-Setup.exe" LogicalName="ArtkToolsInternalSetup.exe" />
+  </ItemGroup>
+
+</Project>

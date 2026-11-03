@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <!-- 产物文件名；build-installer.ps1 会改名成 ArtkServer-win-Setup.exe -->
+    <AssemblyName>ArtkServerSetup</AssemblyName>
+    <RootNamespace>NovaSetup</RootNamespace>
+    <ApplicationIcon>..\Assets\app.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 和 Artk Tools 安装向导共用同一套代码，只换 ProductInfo -->
+    <Compile Include="..\Installer\*.cs" Exclude="..\Installer\ProductInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 内嵌 Velopack 生成的 Artk Server Setup.exe，运行时释放到临时目录再执行 -->
+    <EmbeddedResource Include="payload\ArtkServer-win-Setup.exe" LogicalName="ArtkServerInternalSetup.exe" />
+  </ItemGroup>
+
+</Project>
