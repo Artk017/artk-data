@@ -1,4 +1,4 @@
-﻿﻿# 打包安装包（Artk Tools / WinUIDemo）
+﻿# 打包安装包（Artk Tools / WinUIDemo）
 #
 # 用法：在仓库根目录执行
 #     powershell -ExecutionPolicy Bypass -File build-installer.ps1

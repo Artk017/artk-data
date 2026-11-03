@@ -1,7 +1,7 @@
 # Artk Tools
 
-WinUI 3 桌面工具箱，五个页面 **Windows / 软件 / Game / Safe / 手机工具**，外加设置页。
-软件清单不再内置：增删改都写自建清单服务器 **Artk Server**，客户端只负责展示、下载和安装。
+WinUI 3 桌面工具箱（原项目名 Nova），五个页面 **Windows / 软件 / Game / Safe / 手机工具**，外加设置页。
+软件清单不再内置：增删改都写自建清单服务器 **Artk Server**（工程 `NovaServer/`），客户端只负责展示、下载和安装。
 
 ## 环境
 

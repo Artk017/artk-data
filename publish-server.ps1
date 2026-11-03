@@ -1,4 +1,4 @@
-﻿﻿# 发布 Artk Server（原 NovaServer）：自包含文件夹（目标机器不用装 .NET / Windows App SDK）
+﻿# 发布 Artk Server（原 NovaServer）：自包含文件夹（目标机器不用装 .NET / Windows App SDK）
 # 新版 Artk Server.exe 自带 WinUI 设置界面，Windows App SDK 没法压成单文件，所以这里发布整个文件夹。
 # 需要安装包时用 build-installer.ps1（会额外生成 ArtkServer-win-Setup.exe）。
 # 用法：powershell -ExecutionPolicy Bypass -File publish-server.ps1
