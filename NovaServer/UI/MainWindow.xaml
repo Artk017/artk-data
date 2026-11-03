@@ -1,0 +1,513 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="NovaServer.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Artk Server">
+
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 不支持云母材质时（Windows Server / 老系统）用的实色背景 -->
+        <Border x:Name="SolidBackground" Grid.RowSpan="2"
+                Background="{ThemeResource AppBackgroundBrush}" Visibility="Collapsed" />
+
+        <!-- =============== 标题栏 =============== -->
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Padding="18,0,160,0" Background="Transparent">
+            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                <Image Width="26" Height="26" Source="ms-appx:///Assets/ArtkServer.png" Stretch="Uniform" />
+                <TextBlock Text="Artk Server" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <Border Style="{StaticResource BadgeStyle}" Background="{ThemeResource IconTileBrush}" Padding="7,1,7,1">
+                    <TextBlock x:Name="VersionBadgeText" Text="v—" FontSize="10"
+                               Foreground="{ThemeResource BrandBrush}" />
+                </Border>
+            </StackPanel>
+        </Grid>
+
+        <!-- =============== 左侧导航 + 内容 =============== -->
+        <NavigationView x:Name="Nav" Grid.Row="1"
+                        Background="Transparent"
+                        PaneDisplayMode="Left"
+                        OpenPaneLength="200"
+                        CompactPaneLength="48"
+                        IsBackButtonVisible="Collapsed"
+                        IsSettingsVisible="False"
+                        SelectionChanged="Nav_SelectionChanged">
+            <NavigationView.MenuItems>
+                <NavigationViewItem x:Name="HomeItem" Content="主页" Tag="home">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="Home" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem x:Name="PublishItem" Content="自动发布" Tag="publish">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="Upload" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem x:Name="FilesItem" Content="数据文件" Tag="files">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="Document" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.MenuItems>
+
+            <!-- 设置放到导航栏最下面 -->
+            <NavigationView.FooterMenuItems>
+                <NavigationViewItem x:Name="SettingsItem" Content="设置" Tag="settings">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="Setting" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.FooterMenuItems>
+
+            <Grid>
+                <!-- =============== 主页（状态 + 概览 + 运行日志） =============== -->
+                <ScrollViewer x:Name="HomePage" VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              HorizontalContentAlignment="Stretch" Padding="28,12,36,32">
+                    <StackPanel Spacing="16" HorizontalAlignment="Stretch">
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Spacing="4" Margin="0,0,0,2">
+                                <TextBlock Text="主页" Style="{StaticResource PageTitleStyle}" />
+                                <TextBlock x:Name="SubtitleText" Text="正在读取服务器状态…"
+                                           Style="{StaticResource CaptionStyle}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10"
+                                        VerticalAlignment="Center">
+                                <TextBlock x:Name="StateText" Text="● 连接中" FontSize="12"
+                                           VerticalAlignment="Center"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <Button x:Name="RefreshButton" Content="刷新" CornerRadius="8" Padding="14,5,14,5"
+                                        Click="Refresh_Click" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- 概览 -->
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Style="{StaticResource CardStyle}" Padding="14,14,14,12">
+                                <StackPanel Spacing="3">
+                                    <TextBlock Text="软件数量" Style="{StaticResource MetaStyle}" />
+                                    <TextBlock x:Name="StatCount" Text="—" FontSize="19" FontWeight="SemiBold" />
+                                    <TextBlock x:Name="StatCountNote" Text="—" Style="{StaticResource MetaStyle}"
+                                               TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="1" Style="{StaticResource CardStyle}" Padding="14,14,14,12">
+                                <StackPanel Spacing="3">
+                                    <TextBlock Text="清单更新" Style="{StaticResource MetaStyle}" />
+                                    <TextBlock x:Name="StatUpdated" Text="—" FontSize="19" FontWeight="SemiBold" />
+                                    <TextBlock x:Name="StatUpdatedNote" Text="—" Style="{StaticResource MetaStyle}"
+                                               TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="2" Style="{StaticResource CardStyle}" Padding="14,14,14,12">
+                                <StackPanel Spacing="3">
+                                    <TextBlock Text="自动发布" Style="{StaticResource MetaStyle}" />
+                                    <TextBlock x:Name="StatPublish" Text="—" FontSize="19" FontWeight="SemiBold" />
+                                    <TextBlock x:Name="StatPublishNote" Text="—" Style="{StaticResource MetaStyle}"
+                                               TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="3" Style="{StaticResource CardStyle}" Padding="14,14,14,12">
+                                <StackPanel Spacing="3">
+                                    <TextBlock Text="上次发布" Style="{StaticResource MetaStyle}" />
+                                    <TextBlock x:Name="StatLast" Text="—" FontSize="19" FontWeight="SemiBold" />
+                                    <TextBlock x:Name="StatLastNote" Text="—" Style="{StaticResource MetaStyle}"
+                                               TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <!-- 运行日志 -->
+                        <Border Style="{StaticResource CardStyle}" Padding="20,16,20,16">
+                            <StackPanel Spacing="10">
+                                <Grid ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="运行日志" Style="{StaticResource SectionTitleStyle}" />
+                                        <TextBlock Text="服务启停、数据同步、发布结果和设置改动都会记在这里"
+                                                   Style="{StaticResource MetaStyle}" />
+                                    </StackPanel>
+                                    <Button x:Name="ClearLogButton" Grid.Column="1" Content="清空日志"
+                                            CornerRadius="8" Padding="12,4,12,4" Click="ClearLog_Click"
+                                            VerticalAlignment="Center" />
+                                </Grid>
+
+                                <Border Style="{StaticResource RowDividerStyle}" />
+
+                                <ListView x:Name="LogList" Height="380" SelectionMode="None"
+                                          ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="ListViewItem">
+                                            <Setter Property="Padding" Value="0,2" />
+                                            <Setter Property="MinHeight" Value="0" />
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid ColumnSpacing="10" Padding="0,5">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="62" />
+                                                    <ColumnDefinition Width="40" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding TimeText}" FontSize="12"
+                                                           Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                           VerticalAlignment="Top" />
+                                                <TextBlock Grid.Column="1" Text="{Binding LevelText}" FontSize="12"
+                                                           Foreground="{Binding LevelBrush}" VerticalAlignment="Top" />
+                                                <TextBlock Grid.Column="2" Text="{Binding Message}" FontSize="12.5"
+                                                           TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+
+                                <TextBlock x:Name="LogEmptyText" Text="还没有日志"
+                                           Style="{StaticResource MetaStyle}" Visibility="Collapsed" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- =============== 设置 =============== -->
+                <ScrollViewer x:Name="SettingsPage" Visibility="Collapsed"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              HorizontalContentAlignment="Stretch" Padding="28,12,36,32">
+                    <StackPanel Spacing="16" HorizontalAlignment="Stretch">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="设置" Style="{StaticResource PageTitleStyle}" />
+                            <TextBlock Text="端口、密钥这类改完要重启服务才生效"
+                                       Style="{StaticResource CaptionStyle}" />
+                        </StackPanel>
+
+                        <Border Style="{StaticResource CardStyle}" Padding="20,16,20,18">
+                            <StackPanel Spacing="14">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="服务设置" Style="{StaticResource SectionTitleStyle}" />
+                                    <TextBlock Text="本机与局域网共用下面的端口和密钥"
+                                               Style="{StaticResource MetaStyle}" />
+                                </StackPanel>
+
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="监听端口" Style="{StaticResource RowTitleStyle}" />
+                                        <TextBlock Text="本机与局域网都走这个端口" Style="{StaticResource RowHintStyle}" />
+                                    </StackPanel>
+                                    <NumberBox x:Name="PortBox" Grid.Column="1" Width="160" Minimum="1" Maximum="65535"
+                                               SpinButtonPlacementMode="Compact" VerticalAlignment="Center" />
+                                </Grid>
+
+                                <Border Style="{StaticResource RowDividerStyle}" />
+
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="API Key" Style="{StaticResource RowTitleStyle}" />
+                                        <TextBlock x:Name="ApiKeyHint" Text="—" Style="{StaticResource RowHintStyle}" />
+                                    </StackPanel>
+                                    <PasswordBox x:Name="ApiKeyBox" Grid.Column="1" Width="260" VerticalAlignment="Center"
+                                                 PlaceholderText="留空表示不改" />
+                                </Grid>
+
+                                <Border Style="{StaticResource RowDividerStyle}" />
+
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="读接口也要密钥" Style="{StaticResource RowTitleStyle}" />
+                                        <TextBlock Text="关掉后拿到地址就能抓走整份清单"
+                                                   Style="{StaticResource RowHintStyle}" />
+                                    </StackPanel>
+                                    <ToggleSwitch x:Name="RequireReadToggle" Grid.Column="1" OnContent="开" OffContent="关"
+                                                  VerticalAlignment="Center" />
+                                </Grid>
+
+                                <Border Style="{StaticResource RowDividerStyle}" />
+
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="启动时强制重新下载数据" Style="{StaticResource RowTitleStyle}" />
+                                        <TextBlock Text="会覆盖服务器上对 catalog.json 的本地改动"
+                                                   Style="{StaticResource RowHintStyle}" />
+                                    </StackPanel>
+                                    <ToggleSwitch x:Name="RefreshDataToggle" Grid.Column="1" OnContent="开" OffContent="关"
+                                                  VerticalAlignment="Center" />
+                                </Grid>
+
+                                <Border Style="{StaticResource RowDividerStyle}" />
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="数据源地址" Style="{StaticResource RowTitleStyle}" />
+                                    <TextBlock Text="留空使用默认的 Artk017/artk-data；改完要重启服务"
+                                               Style="{StaticResource RowHintStyle}" />
+                                    <TextBox x:Name="DataBaseUrlBox"
+                                             PlaceholderText="https://github.com/…/releases/download/artk-tools/" />
+                                </StackPanel>
+
+                                <TextBlock x:Name="ServerStatusText" Text="—" Style="{StaticResource MetaStyle}"
+                                           TextWrapping="Wrap" />
+
+                                <StackPanel Orientation="Horizontal" Spacing="9" HorizontalAlignment="Right">
+                                    <Button x:Name="SaveServerButton" Content="保存服务设置" CornerRadius="8"
+                                            Style="{StaticResource AccentButtonStyle}" Click="SaveServer_Click" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 关闭行为 -->
+                        <Border Style="{StaticResource CardStyle}" Padding="20,16,20,18">
+                            <StackPanel Spacing="12">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="关闭行为" Style="{StaticResource SectionTitleStyle}" />
+                                    <TextBlock Text="点窗口右上角的 × 或最小化时怎么处理"
+                                               Style="{StaticResource MetaStyle}" />
+                                </StackPanel>
+
+                                <Border Style="{StaticResource RowDividerStyle}" />
+
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="关闭 Artk Server 时" Style="{StaticResource RowTitleStyle}" />
+                                        <TextBlock Text="选“退出”会停止清单服务并结束进程"
+                                                   Style="{StaticResource RowHintStyle}" />
+                                    </StackPanel>
+                                    <ComboBox x:Name="CloseActionCombo" Grid.Column="1" Width="200"
+                                              VerticalAlignment="Center" SelectionChanged="CloseAction_SelectionChanged">
+                                        <ComboBoxItem Content="最小化至托盘" Tag="tray" />
+                                        <ComboBoxItem Content="退出 Artk Server" Tag="exit" />
+                                    </ComboBox>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 卸载 -->
+                        <Border Style="{StaticResource CardStyle}" Padding="20,16,20,18">
+                            <StackPanel Spacing="12">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="卸载 Artk Server" Style="{StaticResource SectionTitleStyle}" />
+                                    <TextBlock Text="停止后台服务，删除计划任务、防火墙规则、server.json 和 data 目录，再移除程序本体"
+                                               Style="{StaticResource MetaStyle}" TextWrapping="Wrap" />
+                                </StackPanel>
+
+                                <Border Style="{StaticResource RowDividerStyle}" />
+
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="卸载后清单一并删除，无法恢复"
+                                                   Style="{StaticResource RowTitleStyle}" />
+                                        <TextBlock Text="需要管理员授权，会弹出一次 UAC 确认"
+                                                   Style="{StaticResource RowHintStyle}" />
+                                    </StackPanel>
+                                    <Button x:Name="UninstallButton" Grid.Column="1" Content="卸载 Artk Server"
+                                            CornerRadius="8" Padding="14,5,14,5" Click="Uninstall_Click"
+                                            Foreground="{ThemeResource DangerBrush}" VerticalAlignment="Center" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+                <ScrollViewer x:Name="PublishPage" Visibility="Collapsed"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              HorizontalContentAlignment="Stretch" Padding="28,12,36,32">
+                    <StackPanel Spacing="16" HorizontalAlignment="Stretch">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="自动发布" Style="{StaticResource PageTitleStyle}" />
+                            <TextBlock Text="清单改动后自动传回数据仓库的 Release 资产，GitHub 始终是最新备份"
+                                       Style="{StaticResource CaptionStyle}" TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <Border Style="{StaticResource CardStyle}" Padding="20,16,20,18">
+                            <StackPanel Spacing="14">
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="发布开关" Style="{StaticResource SectionTitleStyle}" />
+                                        <TextBlock Text="开启后监听 data 目录，清单一改就上传"
+                                                   Style="{StaticResource RowHintStyle}" />
+                                    </StackPanel>
+                                    <ToggleSwitch x:Name="AutoPublishToggle" Grid.Column="1" OnContent="开" OffContent="关"
+                                                  VerticalAlignment="Center" />
+                                </Grid>
+
+                                <Grid ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="仓库" Style="{StaticResource RowTitleStyle}" />
+                                        <TextBox x:Name="RepoBox" PlaceholderText="Artk017/artk-data" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="6">
+                                        <TextBlock Text="Release tag" Style="{StaticResource RowTitleStyle}" />
+                                        <TextBox x:Name="TagBox" PlaceholderText="artk-tools" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="GitHub token" Style="{StaticResource RowTitleStyle}" />
+                                    <TextBlock x:Name="TokenHint" Text="—" Style="{StaticResource RowHintStyle}" />
+                                    <PasswordBox x:Name="TokenBox" PlaceholderText="留空表示不改" />
+                                </StackPanel>
+
+                                <Border Style="{StaticResource RowDividerStyle}" />
+
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="连 .reg 一起发布" Style="{StaticResource RowTitleStyle}" />
+                                        <TextBlock Text="开启后 data 目录下的 .reg 也会跟着上传"
+                                                   Style="{StaticResource RowHintStyle}" />
+                                    </StackPanel>
+                                    <ToggleSwitch x:Name="RegFilesToggle" Grid.Column="1" OnContent="开" OffContent="关"
+                                                  VerticalAlignment="Center" />
+                                </Grid>
+
+                                <TextBlock x:Name="PublishStatusText" Text="—" Style="{StaticResource MetaStyle}"
+                                           TextWrapping="Wrap" />
+
+                                <StackPanel Orientation="Horizontal" Spacing="9" HorizontalAlignment="Right">
+                                    <Button x:Name="SavePublishButton" Content="保存发布设置" CornerRadius="8"
+                                            Click="SavePublish_Click" />
+                                    <Button x:Name="PublishNowButton" Content="立即发布一次" CornerRadius="8"
+                                            Style="{StaticResource AccentButtonStyle}" Click="PublishNow_Click" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- =============== 数据文件 =============== -->
+                <ScrollViewer x:Name="FilesPage" Visibility="Collapsed"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              HorizontalContentAlignment="Stretch" Padding="28,12,36,32">
+                    <StackPanel Spacing="16" HorizontalAlignment="Stretch">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="数据文件" Style="{StaticResource PageTitleStyle}" />
+                            <TextBlock Text="data 目录里的清单与配置文件"
+                                       Style="{StaticResource CaptionStyle}" />
+                        </StackPanel>
+
+                        <Border Style="{StaticResource CardStyle}" Padding="20,16,20,18">
+                            <StackPanel Spacing="12">
+                                <StackPanel Spacing="2">
+                                    <TextBlock x:Name="DataDirText" Text="—" Style="{StaticResource MetaStyle}"
+                                               TextTrimming="CharacterEllipsis" IsTextSelectionEnabled="True" />
+                                    <TextBlock x:Name="ConfigPathText" Text="—" Style="{StaticResource MetaStyle}"
+                                               TextTrimming="CharacterEllipsis" IsTextSelectionEnabled="True" />
+                                </StackPanel>
+
+                                <Border Style="{StaticResource RowDividerStyle}" />
+
+                                <Grid ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="170" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="文件" Style="{StaticResource MetaStyle}" />
+                                    <TextBlock Grid.Column="1" Text="大小" Style="{StaticResource MetaStyle}"
+                                               HorizontalAlignment="Right" />
+                                    <TextBlock Grid.Column="2" Text="修改时间" Style="{StaticResource MetaStyle}" />
+                                </Grid>
+
+                                <ListView x:Name="FilesList" SelectionMode="None" MaxHeight="480"
+                                          ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="ListViewItem">
+                                            <Setter Property="Padding" Value="0,2" />
+                                            <Setter Property="MinHeight" Value="0" />
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid ColumnSpacing="12" Padding="0,8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="110" />
+                                                    <ColumnDefinition Width="170" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding Name}" FontSize="12.5"
+                                                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="1" Text="{Binding SizeText}" FontSize="12.5"
+                                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                           HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="2" Text="{Binding UpdatedText}" FontSize="12.5"
+                                                           Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                           VerticalAlignment="Center" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+
+                                <TextBlock x:Name="FilesEmptyText" Text="data 目录里还没有文件"
+                                           Style="{StaticResource MetaStyle}" Visibility="Collapsed" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </NavigationView>
+
+        <!-- =============== 通知宿主 =============== -->
+        <StackPanel x:Name="ToastHost" Grid.Row="1"
+                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                    Margin="0,10,18,0" Spacing="8" MaxWidth="380" />
+    </Grid>
+</Window>

@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- 平时双击 = WinUI 设置界面 + 内置清单服务；带 headless 参数 = 无窗口的后台服务（计划任务用） -->
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <!-- 对外可执行文件名：Artk Server.exe（命名空间保持 NovaServer，不动代码） -->
+    <AssemblyName>Artk Server</AssemblyName>
+    <Product>Artk Server</Product>
+    <RootNamespace>NovaServer</RootNamespace>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <Platforms>x64</Platforms>
+    <UseWinUI>true</UseWinUI>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\Assets\app.ico</ApplicationIcon>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <!-- 自己写 Main：headless 参数走控制台，普通启动才进 WinUI -->
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 服务端接口用 Kestrel，不引整个 Web SDK -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <!-- 同上：只要 WinUI，不带元包里的 AI / ML / Search 组件 -->
+    <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="2.3.9" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.InteractiveExperiences" Version="2.1.9" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Runtime" Version="2.5.1" />
+    <!-- 安装包（Velopack）的安装 / 更新 / 卸载钩子，版本和主程序保持一致 -->
+    <PackageReference Include="Velopack" Version="1.2.161" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\Assets\app.ico" Link="Assets\app.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\Assets\ArtkServer.png" Link="Assets\ArtkServer.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- data 目录是运行时生成的，不要打进产物 -->
+    <Content Remove="data\**" />
+    <None Remove="data\**" />
+  </ItemGroup>
+
+</Project>
