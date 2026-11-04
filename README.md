@@ -1,6 +1,6 @@
 # Artk Tools
 
-WinUI 3 桌面工具箱（原项目名 Nova），五个页面 **Windows / 软件 / Game / Safe / 手机工具**，外加设置页。
+WinUI 3 桌面工具箱（原项目名 Nova），六个页面 **Windows / 垃圾清理 / 软件 / Game / Safe / 手机工具**，外加设置页。
 软件清单不再内置：增删改都写自建清单服务器 **Artk Server**（工程 `NovaServer/`），客户端只负责展示、下载和安装。
 
 ## 环境
@@ -73,8 +73,10 @@ dotnet build -c Debug -p:Platform=x64
 
 ```
 App.xaml(.cs)          应用入口 + 全局资源（配色、卡片/文字样式、深浅主题字典）
-MainWindow.xaml(.cs)   窗口外壳：自绘标题栏、Mica、左侧导航（Windows / 软件 / Game / Safe / 手机工具）+ 设置、托盘图标
+MainWindow.xaml(.cs)   窗口外壳：自绘标题栏、Mica、左侧导航（Windows / 垃圾清理 / 软件 / Game / Safe / 手机工具）+ 设置、托盘图标
 Assets/app.ico         应用图标（由 宇宙公主2.png 生成，16–256 多尺寸）
+Assets/Winapp2.ini     Winapp2 清理规则数据库（CC-BY-SA-4.0，4,000+ 条规则）
+Assets/CleanerExtra.ini 国产软件补充规则（QQ / QQ 音乐 / 微信 / 网易云音乐 / WeGame / 360 等）
 Services/
   AppSettings.cs       设置模型与持久化（%LOCALAPPDATA%\Nova\settings.json）
   AppCatalog.cs        清单模型（名称 / 分类 / 固定底色 / 官网 / 直链 / 图标地址 IconUrl / 自动解析方式）
@@ -92,15 +94,20 @@ Services/
   UninstallCleanup.cs  卸载前清理自身数据目录与残留磁贴注册表项
   Toast.cs             全局右上角通知（Success / Error / Info / Busy）
   SystemTweaks.cs      系统开关（指针精度 / 电源计划 / 背景 / 主题 / 任务栏）
-  SystemMonitor.cs     实时指标采样（CPU / 内存 / GPU / 带宽）
   ProcessMonitor.cs    每进程 CPU 增量 + 工作集采样
+  CleanerLibrary.cs    加载 Winapp2.ini + CleanerExtra.ini、中文分类、只保留已安装应用
+  CleanerParser.cs     解析 Winapp2 格式（FileKey / RegKey / ExcludeKey / Detect / Warning）
+  CleanerDetector.cs   判断规则对应的应用是否已安装
+  CleanerPathExpander.cs 展开 %环境变量% 与路径段通配符
+  CleanerEngine.cs     两阶段扫描 / 清理（先出清单，再删除；ExcludeKey 与用户数据目录保护）
+  CleanerNameTranslator.cs 项目名与风险提示中文化（精确词典 + 短语替换）
+  CleanerViewModels.cs 清理页的分类 / 项目 / 结果视图模型
   …                    （AltTabTabs / DisplaySettings / DesktopIcons / ContextMenuStyle / FirewallControl /
                         UacNotify / DefenderPolicy / DefenderRegistryTweak / LocalGroupPolicy /
                         SecurityCenterGuard / SecurityCenterNotify / ActivationStatus / KmsActivation /
                         RegistryAcl / HklmKey / KnownFolderLocations / RegApplier / PhoneTools / PinyinVocab /
                         TrayIcon / QuietHours / AutostartHelper 等）
 Helpers/
-  ChartGeometry.cs     数值投影 + Catmull-Rom 转贝塞尔，生成平滑曲线/面积图
   ProcessIconLoader.cs 从 exe 提取图标并缓存
   UiMotion.cs          轻量动效：淡入滑动、悬停缩放
   WindowSizeLimits.cs  窗口最小 / 最大尺寸
@@ -109,14 +116,15 @@ Helpers/
 Controls/
   ProcessRowView       进程行：图标 + 名称 + CPU + 内存
 Views/
-  WindowsPage          系统状态：CPU / 内存 / GPU / 带宽指标、CPU 曲线与进程占用
+  WindowsPage          系统页：内嵌系统设置开关与系统信息，另含文件位置 / 微软词汇两个入口
+  JunkCleanPage        垃圾清理：Winapp2 + 国产补充规则、分类勾选、扫描预览、风险提示与单项清理
   SoftwarePage         软件：服务器清单卡片、图标、下载 / 安装 / 取消、右键编辑删除
   AddSoftwareWindow    内置浏览器（WebView2）：输入网址或关键词，点下载按钮抓直链和图标
   AppEditorDialog      添加 / 编辑确认框：名称、官网、直链 + 抓到的图标单选
   GamePage             游戏：检测已安装、上传 .reg 并应用
   SafePage             安全：系统与权限开关、安全中心批量设置
   PhoneToolsPage       手机工具：adb / fastboot 设备状态与信息
-  SettingsPage         设置：主题 / 云母 / 启动页 / 软件安装位置 / 清单服务器 / 关于 / 卸载
+  SettingsPage         设置：主题 / 云母 / 启动页 / 软件安装位置 / 关于 / 卸载
   ToolWindow           所有弹窗共用的外壳：自绘标题栏 + 图钉置顶 + 记住尺寸
   …                    （ProcessDetailView / SystemSettingsView / SystemInfoView / FileLocationsDialog /
                         PinyinVocabView / CommandConsoleDialog）
@@ -171,18 +179,36 @@ QQ、QQ音乐这类下载地址是页面里现算的签名链接，裸地址会 
   下载失败回退内置清单，不阻塞启动；`--refresh-data` 或 `server.json` 的 `refreshDataOnStart` 强制重新下载。
 - `server.json` 可配置端口、数据源 `dataBaseUrl`、私有仓库 token `dataToken`、清单自动发布 `autoPublish` 等。
 - `install-service.ps1` 注册计划任务 / 服务；安装包勾选「注册后台服务」时会自动执行。
-- 客户端在设置页查看服务器地址并「检查连接」，地址变更后返回软件页会立即重连。
+- 客户端里服务器地址是写死的常量，设置页不再展示也不提供连接检查；软件页拿不到清单时会提示原因并支持重试。
 - 新增的 `IconUrl` 字段需要**新版 Artk Server** 才会持久化，旧服务端会忽略该字段。
+
+## 垃圾清理
+
+规则来自两份随程序输出的 INI：
+
+| 文件 | 内容 |
+|---|---|
+| `Assets\Winapp2.ini` | 社区维护的通用数据库（4,000+ 条规则，CC-BY-SA-4.0），以国外软件为主 |
+| `Assets\CleanerExtra.ini` | 自建国产软件补充规则：腾讯 QQ（缓存 / 临时文件）、QQ 音乐、微信（新版）、腾讯通用日志、网易云音乐、WeGame、360 安全卫士 |
+
+- **只显示已安装的应用**：按 `DetectFile` / `Detect` / `SpecialDetect` 判断，本机当前识别约 134 项。
+- **中文显示**：项目名与风险提示由 `CleanerNameTranslator` 翻译；品牌名保留英文（如 `Microsoft Edge 自动填充数据和搜索引擎设置`）。搜索框同时匹配中文名和英文原名。
+- **两阶段执行**：扫描阶段只生成删除清单并计算体积，不删除任何文件；清理阶段才按清单删除，正在使用的文件自动跳过。
+- **安全网**：除规则自带的 `ExcludeKey` 外，代码里还硬编码保护浏览器扩展 IndexedDB，以及 `Documents\Tencent Files`、`Documents\WeChat Files`、`Documents\xwechat_files`、`Documents\WXWork` 等聊天记录目录。
+- **清理前确认**：勾选项涉及正在运行的浏览器时先提示关闭；规则带 `Warning` 的项目会汇总成「风险提示」弹窗，取消即不会执行。
+- **勾选记忆**：勾选状态写入 `settings.json`；勾选变化会使已扫描结果失效，需要重新扫描。
+- 新增国内应用时，直接往 `CleanerExtra.ini` 追加同格式条目即可；只收录缓存、日志、崩溃报告等可再生成数据。
 
 ## 其它页面
 
 | 页面 | 内容 |
 |---|---|
-| Windows | 每秒刷新的 CPU / 内存 / GPU / 带宽四张指标卡、CPU 负载曲线（悬停提示 + 点击查看进程占用）；「常用工具」磁贴：系统设置（提高指针精度）、系统信息、文件位置（改下载/文档/图片/视频目录）、跳到软件页 |
+| Windows | 直接内嵌「系统设置」（指针精度 / 高性能电源 / 桌面背景 / 深色模式 / 任务栏靠左 / Alt+Tab 标签页 / 应用通知 / 勿扰 / 刷新率 / 桌面图标 / 右键菜单等开关）与「系统信息」（设备名、处理器、内存、显卡、系统版本）；下方保留文件位置、微软词汇两个工具入口 |
+| 垃圾清理 | 加载 `Assets\Winapp2.ini` 与 `Assets\CleanerExtra.ini`，只显示本机已安装的项目；左侧按中文分类折叠勾选（搜索支持中英文名、全选 / 全不选 / 恢复默认 / 全部展开），右侧为扫描结果，点击可查看将删除的文件与注册表项并单项清理 |
 | Game | 检测「崩坏：星穹铁道」「PotPlayer 64 bit」是否已安装；上传本地 `.reg`（一个软件可多个），齿轮一键应用全部配置 |
 | Safe | 「系统与权限」（关闭防火墙 / 关闭防病毒 / 关闭防病毒(注册表) / 系统激活 / 注册表权限 + 防火墙通知）与「安全中心设置」（一个开关批量关/开 13 项防护） |
 | 手机工具 | adb / fastboot 检测（系统 / fastboot / fastbootd / recovery / sideload / 未授权 / 离线）与设备信息，每 4 秒刷新 |
-| 设置 | 主题 / 云母材质 / 启动页 / 软件安装位置 / 清单服务器 / 关于（版本、设置文件、恢复默认）/ 卸载 |
+| 设置 | 主题 / 云母材质 / 启动页 / 软件安装位置 / 关于（版本、恢复默认）/ 卸载 |
 
 设置保存在 `%LOCALAPPDATA%\Nova\settings.json`，缺失或损坏回落默认值；应用没有账号体系，全部数据只在本机与自建服务器之间流转。
 
@@ -193,14 +219,14 @@ QQ、QQ音乐这类下载地址是页面里现算的签名链接，裸地址会 
 - **字号**：页面标题 28 / 卡片标题 15 / 正文 13 / 说明 12 / 指标数值 30。
 - **图标**：界面图标用 Segoe Fluent Icons；软件图标用服务器给的真实图片，失败回落首字母 + 固定紫。
 - **动效**：只动 `Opacity` / `RenderTransform`，卡片悬停 1.015 缩放。
-- **曲线**：CPU 与帧率共用 `ChartGeometry`。
 - **页面缓存**：`NavigationCacheMode="Required"`，来回切页保留滚动位置。
 
 ## 现状
 
-- 五个模块 + 设置页可正常导航，深浅主题完整；窗口标题、安装包、托盘提示均为 Artk Tools。
+- 六个模块 + 设置页可正常导航，深浅主题完整；窗口标题、安装包、托盘提示均为 Artk Tools。
 - 软件页完全由服务器清单驱动，支持添加（浏览器抓直链 + 图标多选）、编辑、删除、下载、取消、安装、卸载；
   图标有网图就透明显示，没有就回落首字母。
-- Windows 页指标与进程列表都是真实系统数据，每秒刷新。
+- Windows 页已移除 CPU / 内存 / GPU / 带宽指标与负载曲线，改为内嵌系统设置开关和系统信息。
+- 垃圾清理页接入 Winapp2 + 国产补充规则，实测识别 134 项、可清理约 11.6 GB；支持中英文搜索、分类勾选记忆、扫描预览、风险提示与单项清理。
 - Game / Safe / 手机工具 的操作（应用 .reg、系统开关、adb 检测）是真实的；部分展示内容仍是静态。
-- 已知限制：窗口宽度小于约 1100px 时指标卡会挤压，尚未做响应式断点；软件图标依赖外网图片地址，加载失败会回落首字母。
+- 已知限制：窗口宽度小于约 1100px 时双列卡片会挤压，尚未做响应式断点；清理规则以 Winapp2 为主，国内软件覆盖依赖 `CleanerExtra.ini` 持续补充；软件图标依赖外网图片地址，加载失败会回落首字母。

@@ -48,6 +48,11 @@
                         <FontIcon Glyph="&#xE7F4;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
+                <NavigationViewItem Content="垃圾清理" Tag="clean">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE74D;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
                 <NavigationViewItem Content="软件" Tag="software">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE896;" />

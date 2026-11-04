@@ -9,6 +9,8 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Navigation;
+using WinUIDemo.Helpers;
 using WinUIDemo.Services;
 using WinUIDemo.Views;
 using Windows.Graphics;
@@ -80,6 +82,9 @@ public sealed partial class MainWindow : Window
         ResizeAndCenter(1420, 1040);
 
         ApplyAppearance();
+
+        // 每次切页统一走一套「淡入 + 上滑」，缓存的页面也不会出现有的动有的不动
+        ContentFrame.Navigated += OnContentNavigated;
         NavigateToSection(AppSettings.Current.StartupSection);
 
         // 托盘图标要等窗口真正创建出来（有 HWND）才能挂
@@ -94,6 +99,11 @@ public sealed partial class MainWindow : Window
             _trayIcon?.Dispose();
             _trayIcon = null;
             ToolWindow.CloseAll();
+            AddSoftwareWindow.CloseAll();
+
+            // 手机工具相关的都收掉：adb / fastboot 命令进程 + 常驻的 adb server
+            PhoneTools.Shutdown();
+
             Application.Current.Exit();
         };
 
@@ -289,6 +299,14 @@ public sealed partial class MainWindow : Window
             work.Y + ((work.Height - height) / 2)));
     }
 
+    private void OnContentNavigated(object sender, NavigationEventArgs e)
+    {
+        if (e.Content is FrameworkElement page)
+        {
+            UiMotion.PageEnter(page);
+        }
+    }
+
     private void Nav_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
         if (args.SelectedItemContainer is not NavigationViewItem item || item.Tag is not string tag)
@@ -299,6 +317,7 @@ public sealed partial class MainWindow : Window
         Type page = tag switch
         {
             "windows" => typeof(WindowsPage),
+            "clean" => typeof(JunkCleanPage),
             "software" => typeof(SoftwarePage),
             "game" => typeof(GamePage),
             "safe" => typeof(SafePage),
