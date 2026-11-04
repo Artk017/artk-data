@@ -7,7 +7,6 @@
     NavigationCacheMode="Required">
 
     <Page.Resources>
-        <!-- 说明文字 -->
         <Style x:Key="RowTitleStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13.5" />
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
@@ -18,31 +17,56 @@
             <Setter Property="HorizontalAlignment" Value="Left" />
         </Style>
 
-        <!-- 行与行之间的细线 -->
         <Style x:Key="RowDividerStyle" TargetType="Border">
             <Setter Property="Height" Value="1" />
             <Setter Property="Background" Value="{ThemeResource GridLineBrush}" />
+        </Style>
+
+        <!-- 分组标题前的小色块 -->
+        <Style x:Key="GroupIconStyle" TargetType="Border">
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="{ThemeResource IconTileBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="GroupIconGlyphStyle" TargetType="FontIcon">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{ThemeResource BrandBrush}" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- 安装位置只读展示：外框自己画圆角，路径文字用 TextBlock 垂直居中 -->
+        <Style x:Key="FieldFrameStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="MinHeight" Value="34" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
         </Style>
     </Page.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                   Padding="36,18,40,32">
         <StackPanel Spacing="16" MaxWidth="800" HorizontalAlignment="Left">
-            <StackPanel.ChildrenTransitions>
-                <TransitionCollection>
-                    <EntranceThemeTransition FromVerticalOffset="18" />
-                </TransitionCollection>
-            </StackPanel.ChildrenTransitions>
-
+            <!-- ============ 页头 ============ -->
             <StackPanel Spacing="4" Margin="0,0,0,2">
                 <TextBlock Text="设置" Style="{StaticResource PageTitleStyle}" />
-                <TextBlock Text="外观、启动行为、软件安装位置与连接状态" Style="{StaticResource CaptionStyle}" />
+                <TextBlock Text="外观、启动行为与软件安装位置 · 改动即时保存" Style="{StaticResource CaptionStyle}" />
             </StackPanel>
 
-            <!-- ============ 常规：外观 + 启动 ============ -->
+            <!-- ============ 常规 ============ -->
             <Border Style="{StaticResource CardStyle}" Padding="20,16,20,18">
                 <StackPanel Spacing="14">
-                    <TextBlock Text="常规" Style="{StaticResource SectionTitleStyle}" />
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Style="{StaticResource GroupIconStyle}">
+                            <FontIcon Glyph="&#xE713;" Style="{StaticResource GroupIconGlyphStyle}" />
+                        </Border>
+                        <TextBlock Text="常规" Style="{StaticResource SectionTitleStyle}" VerticalAlignment="Center" />
+                    </StackPanel>
 
                     <Grid ColumnSpacing="16">
                         <Grid.ColumnDefinitions>
@@ -91,6 +115,7 @@
                         <ComboBox x:Name="StartupCombo" Grid.Column="1" Width="160" SelectedIndex="0"
                                   VerticalAlignment="Center" SelectionChanged="StartupCombo_SelectionChanged">
                             <ComboBoxItem Content="Windows" />
+                            <ComboBoxItem Content="垃圾清理" />
                             <ComboBoxItem Content="软件" />
                             <ComboBoxItem Content="Game" />
                             <ComboBoxItem Content="Safe" />
@@ -103,10 +128,11 @@
             <!-- ============ 软件安装 ============ -->
             <Border Style="{StaticResource CardStyle}" Padding="20,16,20,18">
                 <StackPanel Spacing="14">
-                    <TextBlock Text="软件安装" Style="{StaticResource SectionTitleStyle}" />
-
-                    <StackPanel Spacing="2">
-                        <TextBlock Text="安装位置" Style="{StaticResource RowTitleStyle}" />
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Style="{StaticResource GroupIconStyle}">
+                            <FontIcon Glyph="&#xE896;" Style="{StaticResource GroupIconGlyphStyle}" />
+                        </Border>
+                        <TextBlock Text="软件安装" Style="{StaticResource SectionTitleStyle}" VerticalAlignment="Center" />
                     </StackPanel>
 
                     <Grid ColumnSpacing="8">
@@ -115,44 +141,45 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBox x:Name="InstallDirBox" PlaceholderText="留空 = 各软件默认目录，例如 D:\Program Files\Apps"
-                                 TextChanged="InstallDirBox_TextChanged" />
-                        <Button Grid.Column="1" Content="浏览…" CornerRadius="8" Click="BrowseInstallDir_Click" />
-                        <Button Grid.Column="2" Content="默认" CornerRadius="8" Click="ResetInstallDir_Click" />
-                    </Grid>
-                </StackPanel>
-            </Border>
 
-            <!-- ============ 清单服务器（固定地址，只读） ============ -->
-            <Border Style="{StaticResource CardStyle}" Padding="20,16,20,18">
-                <StackPanel Spacing="14">
-                    <TextBlock Text="清单服务器" Style="{StaticResource SectionTitleStyle}" />
+                        <Border Style="{StaticResource FieldFrameStyle}">
+                            <Grid ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <FontIcon Glyph="&#xE8B7;" FontSize="12" VerticalAlignment="Center"
+                                          Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                <TextBlock x:Name="InstallDirText" Grid.Column="1" FontSize="13"
+                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                           Text="留空 = 各软件默认目录，例如 D:\Program Files\Apps" />
+                            </Grid>
+                        </Border>
 
-                    <Grid ColumnSpacing="16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Spacing="2" VerticalAlignment="Center">
-                            <TextBlock Text="服务器地址" Style="{StaticResource RowTitleStyle}" />
-                            <TextBlock x:Name="ServerAddressText" Style="{StaticResource RowHintStyle}"
-                                       IsTextSelectionEnabled="True" />
-                        </StackPanel>
-                        <Button Grid.Column="1" Content="检查连接" CornerRadius="8" Padding="14,5,14,5"
-                                VerticalAlignment="Center" Click="CheckServer_Click" />
+                        <Button Grid.Column="1" Content="浏览…" CornerRadius="8" MinHeight="34" Padding="16,0"
+                                Style="{StaticResource AccentButtonStyle}" Click="BrowseInstallDir_Click" />
+                        <Button Grid.Column="2" Content="默认" CornerRadius="8" MinHeight="34" Padding="10,0"
+                                Background="Transparent" BorderThickness="0"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Click="ResetInstallDir_Click" />
                     </Grid>
 
-                    <TextBlock x:Name="ServerStatusText" Text="尚未检查" Style="{StaticResource MetaStyle}"
-                               TextWrapping="Wrap" />
+                    <TextBlock Text="所有新下载的软件都装到这个目录；每款软件会在里面建自己的子文件夹。"
+                               Style="{StaticResource RowHintStyle}" />
                 </StackPanel>
             </Border>
 
             <!-- ============ 关于 ============ -->
             <Border Style="{StaticResource CardStyle}" Padding="20,16,20,18">
                 <StackPanel Spacing="14">
-                    <TextBlock Text="关于" Style="{StaticResource SectionTitleStyle}" />
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Style="{StaticResource GroupIconStyle}">
+                            <FontIcon Glyph="&#xE946;" Style="{StaticResource GroupIconGlyphStyle}" />
+                        </Border>
+                        <TextBlock Text="关于" Style="{StaticResource SectionTitleStyle}" VerticalAlignment="Center" />
+                    </StackPanel>
 
-                    <Grid ColumnSpacing="16">
+                    <Grid ColumnSpacing="14">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
@@ -169,21 +196,22 @@
                         <Button Grid.Column="2" Content="恢复默认设置" VerticalAlignment="Center" CornerRadius="8"
                                 Click="Reset_Click" />
                     </Grid>
-
-                    <Border Style="{StaticResource RowDividerStyle}" />
                 </StackPanel>
             </Border>
 
             <!-- ============ 卸载（仅安装版可用） ============ -->
             <Border Style="{StaticResource CardStyle}" Padding="20,16,20,18">
                 <StackPanel Spacing="14">
-                    <TextBlock Text="卸载" Style="{StaticResource SectionTitleStyle}" />
-
-                    <StackPanel Spacing="2">
-                        <TextBlock Text="卸载 Artk Tools" Style="{StaticResource RowTitleStyle}" />
-                        <TextBlock x:Name="UninstallHint" TextWrapping="Wrap" Style="{StaticResource RowHintStyle}"
-                                   Text="从本机移除 Artk Tools 的安装文件与开始菜单 / 桌面快捷方式，并删除 %LOCALAPPDATA%\Nova 里的设置、清单缓存与下载记录。" />
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Style="{StaticResource GroupIconStyle}">
+                            <FontIcon Glyph="&#xE74D;" FontSize="13" HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" Foreground="{ThemeResource DangerBrush}" />
+                        </Border>
+                        <TextBlock Text="卸载" Style="{StaticResource SectionTitleStyle}" VerticalAlignment="Center" />
                     </StackPanel>
+
+                    <TextBlock x:Name="UninstallHint" TextWrapping="Wrap" Style="{StaticResource RowHintStyle}"
+                               Text="从本机移除 Artk Tools 的安装文件与开始菜单 / 桌面快捷方式，并删除 %LOCALAPPDATA%\Nova 里的设置、清单缓存与下载记录。" />
 
                     <Button x:Name="UninstallButton" Content="卸载 Artk Tools" Click="Uninstall_Click"
                             HorizontalAlignment="Left" CornerRadius="8"

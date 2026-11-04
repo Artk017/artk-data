@@ -1,14 +1,13 @@
 using System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using WinUIDemo.Services;
 
 namespace WinUIDemo.Views;
 
 public sealed partial class SettingsPage : Page
 {
-    private static readonly string[] Sections = { "windows", "software", "game", "safe", "phone" };
+    private static readonly string[] Sections = { "windows", "clean", "software", "game", "safe", "phone" };
 
     private bool _loading = true;
 
@@ -41,10 +40,7 @@ public sealed partial class SettingsPage : Page
         int sectionIndex = Array.IndexOf(Sections, settings.StartupSection);
         StartupCombo.SelectedIndex = sectionIndex >= 0 ? sectionIndex : 0;
 
-        InstallDirBox.Text = settings.InstallDir;
-
-        // 服务器地址写死在客户端里，这里只读展示，不给改
-        ServerAddressText.Text = CatalogServer.Url;
+        ShowInstallDir(settings.InstallDir);
     }
 
     private void ThemeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -106,15 +102,13 @@ public sealed partial class SettingsPage : Page
 
     // ---------------- 软件安装位置 ----------------
 
-    private void InstallDirBox_TextChanged(object sender, TextChangedEventArgs e)
+    /// <summary>安装位置只读展示：没设置时显示灰色提示，设置了就显示完整路径。</summary>
+    private void ShowInstallDir(string path)
     {
-        if (_loading)
-        {
-            return;
-        }
+        bool hasPath = !string.IsNullOrWhiteSpace(path);
 
-        AppSettings.Current.InstallDir = InstallDirBox.Text.Trim();
-        AppSettings.Current.Save();
+        InstallDirText.Text = hasPath ? path : "留空 = 各软件默认目录，例如 D:\\Program Files\\Apps";
+        InstallDirText.Opacity = hasPath ? 1 : 0.6;
     }
 
     private async void BrowseInstallDir_Click(object sender, RoutedEventArgs e)
@@ -141,43 +135,16 @@ public sealed partial class SettingsPage : Page
             return;
         }
 
-        InstallDirBox.Text = folder.Path;
+        ShowInstallDir(folder.Path);
         AppSettings.Current.InstallDir = folder.Path;
         AppSettings.Current.Save();
     }
 
     private void ResetInstallDir_Click(object sender, RoutedEventArgs e)
     {
-        InstallDirBox.Text = string.Empty;
+        ShowInstallDir(string.Empty);
         AppSettings.Current.InstallDir = string.Empty;
         AppSettings.Current.Save();
-    }
-
-    // ---------------- 清单服务器 ----------------
-
-    private async void CheckServer_Click(object sender, RoutedEventArgs e)
-    {
-        ServerStatusText.Text = "正在连接…";
-
-        (bool ok, string message) = await CatalogServer.PingAsync();
-
-        ServerStatusText.Text = message;
-        ServerStatusText.Foreground = new SolidColorBrush(ok
-            ? Windows.UI.Color.FromArgb(255, 0x0F, 0x9D, 0x58)
-            : Windows.UI.Color.FromArgb(255, 0xDC, 0x26, 0x26));
-
-        if (ok)
-        {
-            string where = Uri.TryCreate(CatalogServer.Url, UriKind.Absolute, out Uri? uri)
-                ? uri.Authority
-                : CatalogServer.Url;
-
-            Toast.Success("已连接服务器", $"{where} · {message.Replace("连接成功 · ", string.Empty, StringComparison.Ordinal)}", 5);
-        }
-        else
-        {
-            Toast.Error("连接失败", message);
-        }
     }
 
     // ---------------- 卸载 ----------------

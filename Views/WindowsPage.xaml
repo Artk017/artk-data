@@ -5,275 +5,95 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:controls="using:WinUIDemo.Controls"
+    xmlns:local="using:WinUIDemo.Views"
     mc:Ignorable="d"
     Background="Transparent"
-    NavigationCacheMode="Required"
-    Loaded="Page_Loaded"
-    Unloaded="Page_Unloaded">
-
-    <Page.Resources>
-        <!-- 整条标题栏可点：透明背景铺满卡片宽度，hover 只做轻微反馈 -->
-        <Style x:Key="SectionHeaderButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0,6" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-        </Style>
-    </Page.Resources>
+    NavigationCacheMode="Required">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                   Padding="36,18,40,32">
         <StackPanel Spacing="18">
-            <StackPanel.ChildrenTransitions>
-                <TransitionCollection>
-                    <EntranceThemeTransition FromVerticalOffset="20" />
-                </TransitionCollection>
-            </StackPanel.ChildrenTransitions>
-
             <!-- ============ 页头 ============ -->
             <StackPanel Spacing="4" Margin="0,0,0,2">
                 <TextBlock Text="Windows" Style="{StaticResource PageTitleStyle}" />
-                <TextBlock Text="系统状态、存储空间与系统工具" Style="{StaticResource CaptionStyle}" />
+                <TextBlock Text="系统设置与硬件信息一览" Style="{StaticResource CaptionStyle}" />
             </StackPanel>
 
-            <!-- ============ 实时指标 ============ -->
             <Grid ColumnSpacing="14">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="1.05*" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <Border Style="{StaticResource CardStyle}" Padding="18,16">
-                    <StackPanel Spacing="8">
-                        <StackPanel Orientation="Horizontal" Spacing="9">
-                            <Border Width="28" Height="28" CornerRadius="8" Background="{ThemeResource IconTileBrush}">
-                                <FontIcon Glyph="&#xE9D9;" FontSize="13" Foreground="{ThemeResource BrandBrush}" />
-                            </Border>
-                            <TextBlock Text="CPU 使用率" Style="{StaticResource CaptionStyle}" VerticalAlignment="Center" />
+                <!-- ============ 系统设置 ============ -->
+                <Border Style="{StaticResource CardStyle}" Padding="0" VerticalAlignment="Top">
+                    <StackPanel>
+                        <StackPanel Padding="20,14,20,12" Spacing="2">
+                            <TextBlock Text="系统设置" Style="{StaticResource SectionTitleStyle}" />
+                            <TextBlock Text="开关即时生效，无需重启" Style="{StaticResource MetaStyle}" />
                         </StackPanel>
-                        <TextBlock x:Name="CpuValueText" Text="—" Style="{StaticResource StatValueStyle}" />
-                        <ProgressBar x:Name="CpuBar" Value="0" Height="5" Foreground="{ThemeResource BrandBrush}" />
-                        <TextBlock x:Name="CpuMetaText" Text="正在采样…" Style="{StaticResource MetaStyle}" />
+                        <Border Height="1" Background="{ThemeResource GridLineBrush}" />
+                        <local:SystemSettingsView />
                     </StackPanel>
                 </Border>
 
-                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Padding="18,16">
-                    <StackPanel Spacing="8">
-                        <StackPanel Orientation="Horizontal" Spacing="9">
-                            <Border Width="28" Height="28" CornerRadius="8" Background="{ThemeResource IconTileBrush}">
-                                <FontIcon Glyph="&#xE8F1;" FontSize="13" Foreground="{ThemeResource BrandBrush}" />
-                            </Border>
-                            <TextBlock Text="内存占用" Style="{StaticResource CaptionStyle}" VerticalAlignment="Center" />
-                        </StackPanel>
-                        <TextBlock x:Name="MemoryValueText" Text="—" Style="{StaticResource StatValueStyle}" />
-                        <ProgressBar x:Name="MemoryBar" Value="0" Height="5" Foreground="{ThemeResource InfoBrush}" />
-                        <TextBlock x:Name="MemoryMetaText" Text="正在采样…" Style="{StaticResource MetaStyle}" />
-                    </StackPanel>
-                </Border>
-
-                <Border Grid.Column="2" Style="{StaticResource CardStyle}" Padding="18,16">
-                    <StackPanel Spacing="8">
-                        <StackPanel Orientation="Horizontal" Spacing="9">
-                            <Border Width="28" Height="28" CornerRadius="8" Background="{ThemeResource IconTileBrush}">
-                                <FontIcon Glyph="&#xE7F4;" FontSize="13" Foreground="{ThemeResource BrandBrush}" />
-                            </Border>
-                            <TextBlock Text="GPU 使用率" Style="{StaticResource CaptionStyle}" VerticalAlignment="Center" />
-                        </StackPanel>
-                        <TextBlock x:Name="GpuValueText" Text="—" Style="{StaticResource StatValueStyle}" />
-                        <ProgressBar x:Name="GpuBar" Value="0" Height="5" Foreground="{ThemeResource SuccessBrush}" />
-                        <TextBlock x:Name="GpuMetaText" Text="正在采样…" Style="{StaticResource MetaStyle}" />
-                    </StackPanel>
-                </Border>
-
-                <Border Grid.Column="3" Style="{StaticResource CardStyle}" Padding="18,16">
-                    <StackPanel Spacing="8">
-                        <StackPanel Orientation="Horizontal" Spacing="9">
-                            <Border Width="28" Height="28" CornerRadius="8" Background="{ThemeResource IconTileBrush}">
-                                <FontIcon Glyph="&#xE89F;" FontSize="13" Foreground="{ThemeResource BrandBrush}" />
-                            </Border>
-                            <TextBlock Text="带宽使用" Style="{StaticResource CaptionStyle}" VerticalAlignment="Center" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="5">
-                            <TextBlock x:Name="NetworkValueText" Text="—" Style="{StaticResource StatValueStyle}" />
-                            <TextBlock x:Name="NetworkUnitText" Text="兆比特/秒" FontSize="12"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                       VerticalAlignment="Bottom" Margin="0,0,0,7" />
-                        </StackPanel>
-                        <ProgressBar x:Name="NetworkBar" Value="0" Height="5" Foreground="{ThemeResource WarningBrush}" />
-                        <TextBlock x:Name="NetworkMetaText" Text="正在采样…" Style="{StaticResource MetaStyle}" />
-                    </StackPanel>
-                </Border>
-            </Grid>
-
-            <!-- ============ CPU 负载 ============ -->
-            <Border Style="{StaticResource CardStyle}" Padding="20,18">
-                <StackPanel>
-                    <Button x:Name="ChartHeaderButton" Style="{StaticResource SectionHeaderButtonStyle}"
-                            Click="ChartSection_Click" ToolTipService.ToolTip="展开 / 收起">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Spacing="3">
-                                <TextBlock Text="CPU 负载" Style="{StaticResource SectionTitleStyle}" />
-                                <TextBlock Text="近 60 秒 · 每秒采样 · 悬停查看详情" Style="{StaticResource CaptionStyle}" />
+                <!-- ============ 右侧：系统信息 + 快捷工具 ============ -->
+                <StackPanel Grid.Column="1" Spacing="14">
+                    <Border Style="{StaticResource CardStyle}" Padding="0" VerticalAlignment="Top">
+                        <StackPanel>
+                            <StackPanel Padding="20,14,20,12" Spacing="2">
+                                <TextBlock Text="系统信息" Style="{StaticResource SectionTitleStyle}" />
+                                <TextBlock Text="设备名称、处理器、内存与显卡" Style="{StaticResource MetaStyle}" />
                             </StackPanel>
-                            <FontIcon x:Name="ChartChevron" Grid.Column="1" Glyph="&#xE70D;" FontSize="12"
-                                      VerticalAlignment="Center" Margin="10,0,4,0"
-                                      Foreground="{ThemeResource TextFillColorSecondaryBrush}">
-                                <FontIcon.RenderTransform>
-                                    <RotateTransform x:Name="ChartChevronRotate" CenterX="6" CenterY="6" />
-                                </FontIcon.RenderTransform>
-                            </FontIcon>
-                        </Grid>
-                    </Button>
+                            <Border Height="1" Background="{ThemeResource GridLineBrush}" />
+                            <local:SystemInfoView />
+                        </StackPanel>
+                    </Border>
 
-                    <StackPanel x:Name="ChartBody">
-
-                    <!-- 图表 + 悬停提示叠放在同一层：提示用 Margin 做绝对定位，必须与图表同格 -->
-                    <Grid Margin="0,18,0,0">
-                        <!-- Background 必须非空，否则空白处不参与命中测试，悬停只在曲线描边上触发 -->
-                        <Grid x:Name="ChartHost" Height="212"
-                              Background="Transparent"
-                              SizeChanged="ChartHost_SizeChanged"
-                              PointerMoved="ChartHost_PointerMoved"
-                              PointerExited="ChartHost_PointerExited"
-                              PointerPressed="ChartHost_PointerPressed">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-
-                        <Border Grid.Row="0" Height="1" VerticalAlignment="Bottom" Background="{ThemeResource GridLineBrush}" />
-                        <Border Grid.Row="1" Height="1" VerticalAlignment="Bottom" Background="{ThemeResource GridLineBrush}" />
-                        <Border Grid.Row="2" Height="1" VerticalAlignment="Bottom" Background="{ThemeResource GridLineBrush}" />
-                        <Border Grid.Row="3" Height="1" VerticalAlignment="Bottom" Background="{ThemeResource GridLineBrush}" />
-
-                        <Path x:Name="ChartAreaPath" Grid.RowSpan="4" Stretch="None"
-                              HorizontalAlignment="Left" VerticalAlignment="Top"
-                              Fill="{ThemeResource ChartAreaBrush}" />
-                        <Path x:Name="ChartLinePath" Grid.RowSpan="4" Stretch="None"
-                              HorizontalAlignment="Left" VerticalAlignment="Top"
-                              Stroke="{ThemeResource ChartLineBrush}" StrokeThickness="2.5"
-                              StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-
-                        <Ellipse x:Name="LastPointDot" Grid.RowSpan="4" Width="9" Height="9"
-                                 Fill="{ThemeResource BrandBrush}"
-                                 Stroke="{ThemeResource CardBackgroundFillColorDefaultBrush}" StrokeThickness="2"
-                                 HorizontalAlignment="Left" VerticalAlignment="Top" />
-                        </Grid>
-
-                        <!-- 悬停提示：跟随鼠标。用 RenderTransform 定位，不参与布局，避免移动时触发重排 -->
-                        <Border x:Name="HoverHint" Visibility="Collapsed"
-                                IsHitTestVisible="False" HorizontalAlignment="Left" VerticalAlignment="Top"
-                                Padding="9,5" CornerRadius="7"
-                                Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
-                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                BorderThickness="1">
-                            <Border.RenderTransform>
-                                <TranslateTransform x:Name="HintTransform" />
-                            </Border.RenderTransform>
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon Glyph="&#xE8B0;" FontSize="11" Foreground="{ThemeResource BrandBrush}"
-                                          VerticalAlignment="Center" />
-                                <TextBlock Text="点击鼠标显示详情" FontSize="12" VerticalAlignment="Center" />
+                    <Border Style="{StaticResource CardStyle}" Padding="0">
+                        <StackPanel>
+                            <StackPanel Padding="20,14,20,12" Spacing="2">
+                                <TextBlock Text="系统工具" Style="{StaticResource SectionTitleStyle}" />
+                                <TextBlock Text="文件位置与微软拼音词汇" Style="{StaticResource MetaStyle}" />
                             </StackPanel>
-                        </Border>
-                    </Grid>
+                            <Border Height="1" Background="{ThemeResource GridLineBrush}" />
 
-                    <Grid Margin="0,10,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="60 秒前" Style="{StaticResource MetaStyle}" HorizontalAlignment="Left" />
-                        <TextBlock Grid.Column="1" Text="45 秒" Style="{StaticResource MetaStyle}" HorizontalAlignment="Center" />
-                        <TextBlock Grid.Column="2" Text="30 秒" Style="{StaticResource MetaStyle}" HorizontalAlignment="Center" />
-                        <TextBlock Grid.Column="3" Text="15 秒" Style="{StaticResource MetaStyle}" HorizontalAlignment="Center" />
-                        <TextBlock Grid.Column="4" Text="现在" Style="{StaticResource MetaStyle}" HorizontalAlignment="Right" />
-                    </Grid>
-                    </StackPanel>
+                            <Grid Padding="16,14,16,16" ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Button Style="{StaticResource TileButtonStyle}" Padding="14,12"
+                                        HorizontalAlignment="Stretch"
+                                        Click="FileLocations_Click"
+                                        ToolTipService.ToolTip="更改下载 / 文档 / 图片 / 视频的保存位置">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Border Width="26" Height="26" CornerRadius="8" Background="{ThemeResource IconTileBrush}">
+                                            <FontIcon Glyph="&#xE8B7;" FontSize="12" Foreground="{ThemeResource BrandBrush}" />
+                                        </Border>
+                                        <TextBlock Text="文件位置" Style="{StaticResource SectionTitleStyle}"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Grid.Column="1" Style="{StaticResource TileButtonStyle}" Padding="14,12"
+                                        HorizontalAlignment="Stretch"
+                                        Click="OpenPinyinVocab_Click"
+                                        ToolTipService.ToolTip="上传 / 导入微软拼音词汇">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Border Width="26" Height="26" CornerRadius="8" Background="{ThemeResource IconTileBrush}">
+                                            <FontIcon Glyph="&#xE82D;" FontSize="12" Foreground="{ThemeResource BrandBrush}" />
+                                        </Border>
+                                        <TextBlock Text="微软词汇" Style="{StaticResource SectionTitleStyle}"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
-            </Border>
-
-            <!-- ============ 系统工具 ============ -->
-            <Grid ColumnSpacing="14">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <Button Style="{StaticResource TileButtonStyle}" Padding="18,16"
-                        Click="OpenSettings_Click"
-                        ToolTipService.ToolTip="打开 Windows 设置">
-                    <StackPanel Spacing="5">
-                        <StackPanel Orientation="Horizontal" Spacing="9">
-                            <Border Width="28" Height="28" CornerRadius="8" Background="{ThemeResource IconTileBrush}">
-                                <FontIcon Glyph="&#xE713;" FontSize="13" Foreground="{ThemeResource BrandBrush}" />
-                            </Border>
-                            <TextBlock Text="系统设置" Style="{StaticResource SectionTitleStyle}"
-                                       VerticalAlignment="Center" />
-                        </StackPanel>
-                    </StackPanel>
-                </Button>
-
-                <Button Grid.Column="1" Style="{StaticResource TileButtonStyle}" Padding="18,16"
-                        Click="OpenSystemInfo_Click"
-                        ToolTipService.ToolTip="打开系统信息（msinfo32）">
-                    <StackPanel Spacing="5">
-                        <StackPanel Orientation="Horizontal" Spacing="9">
-                            <Border Width="28" Height="28" CornerRadius="8" Background="{ThemeResource IconTileBrush}">
-                                <FontIcon Glyph="&#xE946;" FontSize="13" Foreground="{ThemeResource BrandBrush}" />
-                            </Border>
-                            <TextBlock Text="系统信息" Style="{StaticResource SectionTitleStyle}"
-                                       VerticalAlignment="Center" />
-                        </StackPanel>
-                    </StackPanel>
-                </Button>
-
-                <Button Grid.Column="2" Style="{StaticResource TileButtonStyle}" Padding="18,16"
-                        Click="FileLocations_Click"
-                        ToolTipService.ToolTip="更改下载 / 文档 / 图片 / 视频的保存位置">
-                    <StackPanel Spacing="5">
-                        <StackPanel Orientation="Horizontal" Spacing="9">
-                            <Border Width="28" Height="28" CornerRadius="8" Background="{ThemeResource IconTileBrush}">
-                                <FontIcon Glyph="&#xE8B7;" FontSize="13" Foreground="{ThemeResource BrandBrush}" />
-                            </Border>
-                            <TextBlock Text="文件位置" Style="{StaticResource SectionTitleStyle}"
-                                       VerticalAlignment="Center" />
-                        </StackPanel>
-                    </StackPanel>
-                </Button>
-
-                <Button Grid.Column="3" Style="{StaticResource TileButtonStyle}" Padding="18,16"
-                        Click="OpenPinyinVocab_Click"
-                        ToolTipService.ToolTip="上传 / 导入微软拼音词汇">
-                    <StackPanel Spacing="5">
-                        <StackPanel Orientation="Horizontal" Spacing="9">
-                            <Border Width="28" Height="28" CornerRadius="8" Background="{ThemeResource IconTileBrush}">
-                                <FontIcon Glyph="&#xE82D;" FontSize="13" Foreground="{ThemeResource BrandBrush}" />
-                            </Border>
-                            <TextBlock Text="微软词汇" Style="{StaticResource SectionTitleStyle}"
-                                       VerticalAlignment="Center" />
-                        </StackPanel>
-                    </StackPanel>
-                </Button>
             </Grid>
         </StackPanel>
     </ScrollViewer>
 </Page>
-

@@ -28,6 +28,10 @@ public sealed partial class AddSoftwareWindow : Window
     private bool _confirming;
     private List<string> _iconCandidates = new();
 
+    // 主窗口关闭时要连这些浏览器窗口一起收掉，否则进程会被它们吊着不退出
+    private static readonly List<AddSoftwareWindow> Live = new();
+    private static readonly object LiveGate = new();
+
     public AddSoftwareWindow()
     {
         InitializeComponent();
@@ -54,7 +58,38 @@ public sealed partial class AddSoftwareWindow : Window
         ResizeAndCenter();
 
         RootGrid.Loaded += OnRootLoaded;
-        Closed += (_, _) => _limits.Dispose();
+
+        lock (LiveGate)
+        {
+            Live.Add(this);
+        }
+
+        Closed += (_, _) =>
+        {
+            lock (LiveGate)
+            {
+                Live.Remove(this);
+            }
+
+            _limits.Dispose();
+        };
+    }
+
+    /// <summary>关掉所有还开着的「添加软件」窗口（应用退出时调用）。</summary>
+    public static void CloseAll()
+    {
+        AddSoftwareWindow[] windows;
+
+        lock (LiveGate)
+        {
+            windows = Live.ToArray();
+            Live.Clear();
+        }
+
+        foreach (AddSoftwareWindow window in windows)
+        {
+            window.Close();
+        }
     }
 
     /// <summary>本窗口是否成功添加过软件，软件页据此决定要不要重新拉清单。</summary>

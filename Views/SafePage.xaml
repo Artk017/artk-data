@@ -9,12 +9,6 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                   Padding="36,18,40,32">
         <StackPanel Spacing="16" MaxWidth="860" HorizontalAlignment="Left">
-            <StackPanel.ChildrenTransitions>
-                <TransitionCollection>
-                    <EntranceThemeTransition FromVerticalOffset="18" />
-                </TransitionCollection>
-            </StackPanel.ChildrenTransitions>
-
             <!-- ============ 页头 ============ -->
             <StackPanel Spacing="4" Margin="0,0,0,2">
                 <TextBlock Text="Safe" Style="{StaticResource PageTitleStyle}" />

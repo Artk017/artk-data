@@ -10,12 +10,6 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                   Padding="36,18,40,32">
         <StackPanel Spacing="16" MaxWidth="1180" HorizontalAlignment="Left">
-            <StackPanel.ChildrenTransitions>
-                <TransitionCollection>
-                    <EntranceThemeTransition FromVerticalOffset="18" />
-                </TransitionCollection>
-            </StackPanel.ChildrenTransitions>
-
             <!-- ============ 页头 ============ -->
             <Grid RowSpacing="10">
                 <Grid.RowDefinitions>
@@ -70,7 +64,8 @@
                         <!-- 圆角用 Rectangle 画：Border 的 CornerRadius 是硬裁剪，125% 缩放下边缘会有台阶 -->
                         <Grid VerticalAlignment="Stretch" RightTapped="Card_RightTapped"
                               RenderTransformOrigin="0.5,0.5"
-                              PointerEntered="Card_PointerEntered" PointerExited="Card_PointerExited">
+                              PointerEntered="Card_PointerEntered" PointerExited="Card_PointerExited"
+                              PointerPressed="Card_PointerPressed" PointerReleased="Card_PointerReleased">
                             <Grid.RenderTransform>
                                 <ScaleTransform />
                             </Grid.RenderTransform>

@@ -169,7 +169,7 @@ public sealed partial class SoftwarePage : Page
     {
         if (sender is FrameworkElement element)
         {
-            UiMotion.ScaleTo(element, 1.015);
+            UiMotion.ScaleTo(element, 1.01);
         }
     }
 
@@ -178,6 +178,22 @@ public sealed partial class SoftwarePage : Page
         if (sender is FrameworkElement element)
         {
             UiMotion.ScaleTo(element, 1.0);
+        }
+    }
+
+    private void Card_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if (sender is FrameworkElement element)
+        {
+            UiMotion.ScaleTo(element, 0.99, UiMotion.PressDuration);
+        }
+    }
+
+    private void Card_PointerReleased(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if (sender is FrameworkElement element)
+        {
+            UiMotion.ScaleTo(element, 1.01, UiMotion.PressDuration);
         }
     }
 
