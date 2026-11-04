@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
@@ -37,6 +38,12 @@ public sealed class AppSettings
     /// 会随安装包类型翻译成对应静默参数（NSIS /D=、MSI INSTALLDIR、Inno /DIR=）。
     /// </summary>
     public string InstallDir { get; set; } = string.Empty;
+
+    /// <summary>Windows 清理页已勾选项目的名称，用于下次打开时恢复勾选状态。</summary>
+    public List<string> CleanerSelection { get; set; } = new();
+
+    /// <summary>是否已经保存过勾选状态；用于区分“从未选择”和“刻意全部取消”。</summary>
+    public bool CleanerSelectionSaved { get; set; }
 
     public static AppSettings Current { get; private set; } = Load();
 
@@ -90,6 +97,8 @@ public sealed class AppSettings
         UseMica = true;
         StartupSection = "windows";
         InstallDir = string.Empty;
+        CleanerSelection.Clear();
+        CleanerSelectionSaved = false;
         Save();
     }
 }

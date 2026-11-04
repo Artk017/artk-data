@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -71,6 +72,68 @@ public static class PhoneTools
     public static bool ToolsFound => AdbPath is not null || FastbootPath is not null;
 
     private static bool _adbServerReset;
+
+    // 本进程正在跑的 adb / fastboot 命令（安装 APK、查询设备等），退出时统一掐掉
+    private static readonly object ProcessGate = new();
+    private static readonly HashSet<Process> Running = new();
+
+    /// <summary>应用退出时调用：结束所有还在跑的 adb / fastboot 命令，并顺手关掉 adb server。</summary>
+    public static void Shutdown()
+    {
+        List<Process> running;
+
+        lock (ProcessGate)
+        {
+            running = Running.ToList();
+        }
+
+        foreach (Process process in running)
+        {
+            try
+            {
+                if (!process.HasExited)
+                {
+                    process.Kill(entireProcessTree: true);
+                }
+            }
+            catch
+            {
+                // 进程刚好退出或无权结束，忽略
+            }
+        }
+
+        lock (ProcessGate)
+        {
+            Running.Clear();
+        }
+
+        // adb 是客户端 / 服务端结构：只结束命令行客户端的话 adb.exe 服务会一直常驻。
+        // 关闭软件时主动 kill-server，避免手机工具关掉后还留一个后台进程。
+        string? adb = AdbPath;
+
+        if (adb is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var psi = new ProcessStartInfo(adb)
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WorkingDirectory = Path.GetTempPath(),
+            };
+            psi.ArgumentList.Add("kill-server");
+
+            using Process? process = Process.Start(psi);
+            process?.WaitForExit(2000);
+        }
+        catch
+        {
+            // 结束失败不影响退出
+        }
+    }
 
     public static async Task<PhoneInfo> QueryAsync(CancellationToken token = default)
     {
@@ -974,6 +1037,21 @@ public static class PhoneTools
             if (!process.Start())
             {
                 return (false, string.Empty);
+            }
+
+            // 记进运行表：退出应用时统一结束，避免安装 / 查询命令在后台残留
+            process.EnableRaisingEvents = true;
+            process.Exited += (_, _) =>
+            {
+                lock (ProcessGate)
+                {
+                    Running.Remove(process);
+                }
+            };
+
+            lock (ProcessGate)
+            {
+                Running.Add(process);
             }
 
             process.BeginOutputReadLine();
