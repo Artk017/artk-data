@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Win32;
 
-namespace WinUIDemo.Helpers;
+namespace ArtkTools.Helpers;
 
 /// <summary>
 /// 从注册表 / Win32 读取这台机器的固定信息。

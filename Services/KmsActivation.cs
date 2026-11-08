@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>
 /// 一键 KMS 激活：让管理员 PowerShell 依次执行 4 条 slmgr 命令，每条之间停 0.5 秒：

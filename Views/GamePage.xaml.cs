@@ -7,10 +7,10 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Shapes;
-using WinUIDemo.Helpers;
-using WinUIDemo.Services;
+using ArtkTools.Helpers;
+using ArtkTools.Services;
 
-namespace WinUIDemo.Views;
+namespace ArtkTools.Views;
 
 public sealed partial class GamePage : Page
 {

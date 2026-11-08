@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>单个进程的占用情况。</summary>
 public sealed record ProcessUsage(

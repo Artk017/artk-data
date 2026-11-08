@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using WinUIDemo.Controls;
-using WinUIDemo.Helpers;
-using WinUIDemo.Services;
+using ArtkTools.Controls;
+using ArtkTools.Helpers;
+using ArtkTools.Services;
 
-namespace WinUIDemo.Views;
+namespace ArtkTools.Views;
 
 /// <summary>
 /// 「进程占用」弹窗的内容：按 CPU 排序的进程列表，行数随窗口高度自适应。

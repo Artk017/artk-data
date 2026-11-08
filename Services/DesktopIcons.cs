@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>
 /// 桌面图标（此电脑 / 用户的文件 / 网络 / 回收站 / 控制面板）的显示开关。

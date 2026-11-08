@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Security.Principal;
 using Microsoft.Win32;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>
 /// 「关闭防病毒(注册表)」开关：不开组策略界面，直接按表往注册表里写/删一整组配置。

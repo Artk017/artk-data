@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace WinUIDemo.Helpers;
+namespace ArtkTools.Helpers;
 
 /// <summary>
 /// 窗口摆位用的屏幕工作区查询。

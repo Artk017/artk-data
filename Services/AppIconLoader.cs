@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage.Streams;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>
 /// 网页上抓来的图标：下载后缓存到本地，再交给卡片 / 选择框显示。

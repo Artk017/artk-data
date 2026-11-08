@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>
 /// Winapp2 数据库里的项目名是英文的，这里把常见词句翻译成中文。

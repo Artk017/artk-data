@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Microsoft.Win32;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>注册表根键映射，识别与清理阶段共用。</summary>
 public static class CleanerRegistry

@@ -1,0 +1,17 @@
+bin/
+obj/
+.vs/
+dist/
+*.user
+shots/
+
+# 打包时把内层 Setup.exe 拷进来当嵌入资源，每次构建自动重新生成
+Installer/payload/
+ServerSetup/payload/
+
+# 服务端运行时自己建的数据目录（启动时从 GitHub 数据仓库下载）
+NovaServer/data/
+
+# 临时参考材料 / 测试产物
+_ref/
+*.log

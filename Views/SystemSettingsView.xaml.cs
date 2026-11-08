@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using WinUIDemo.Services;
+using ArtkTools.Services;
 
-namespace WinUIDemo.Views;
+namespace ArtkTools.Views;
 
 /// <summary>
 /// 「系统设置」弹窗的内容：只放外观 / 交互类的开关（写系统配置，但不动安全设置）。
@@ -28,7 +28,8 @@ public sealed partial class SystemSettingsView : UserControl
     {
         _loading = true;
 
-        PointerPrecisionToggle.IsOn = Read(SystemTweaks.TryGetPointerPrecision, PointerPrecisionToggle);
+        // 开关写的是「关闭提高指针精度」，所以和系统里的真实状态取反
+        PointerPrecisionToggle.IsOn = ReadInverted(SystemTweaks.TryGetPointerPrecision, PointerPrecisionToggle);
         HighPerformanceToggle.IsOn = Read(SystemTweaks.TryGetHighPerformance, HighPerformanceToggle);
         BackgroundToggle.IsOn = Read(SystemTweaks.TryGetBackgroundPicture, BackgroundToggle);
         DarkModeToggle.IsOn = Read(SystemTweaks.TryGetDarkMode, DarkModeToggle);
@@ -161,7 +162,8 @@ public sealed partial class SystemSettingsView : UserControl
         if (UacNotify.TryGetEnabled() is bool enabled)
         {
             UacNotifyToggle.IsEnabled = true;
-            UacNotifyToggle.IsOn = enabled;
+            // 开关写的是「关闭应用运行通知」，系统里通知开着时开关应该是关的
+            UacNotifyToggle.IsOn = !enabled;
         }
         else
         {
@@ -180,7 +182,8 @@ public sealed partial class SystemSettingsView : UserControl
             return;
         }
 
-        bool wanted = UacNotifyToggle.IsOn;
+        bool disable = UacNotifyToggle.IsOn;
+        bool wanted = !disable;
 
         if (UacNotify.TryGetEnabled() == wanted)
         {
@@ -188,7 +191,7 @@ public sealed partial class SystemSettingsView : UserControl
         }
 
         UacNotifyToggle.IsEnabled = false;
-        Border? busy = Toast.Busy(wanted ? "正在开启应用运行通知" : "正在关闭应用运行通知", "等待管理员确认…");
+        Border? busy = Toast.Busy(disable ? "正在关闭应用运行通知" : "正在开启应用运行通知", "等待管理员确认…");
 
         var (ok, error) = await Task.Run(() =>
         {
@@ -199,7 +202,7 @@ public sealed partial class SystemSettingsView : UserControl
         if (UacNotify.TryGetEnabled() is bool actual && actual != wanted)
         {
             _loading = true;
-            UacNotifyToggle.IsOn = actual;
+            UacNotifyToggle.IsOn = !actual;
             _loading = false;
         }
 
@@ -350,13 +353,26 @@ public sealed partial class SystemSettingsView : UserControl
         return false;
     }
 
+    private static bool ReadInverted(Reader reader, Control control)
+    {
+        if (reader(out bool value))
+        {
+            return !value;
+        }
+
+        control.IsEnabled = false;
+        ToolTipService.SetToolTip(control, "系统里读不到这一项，已停用");
+        return false;
+    }
+
     private delegate bool Reader(out bool value);
 
     // ---------------- 各个开关 ----------------
 
     private void PointerPrecision_Toggled(object sender, RoutedEventArgs e)
     {
-        Apply(PointerPrecisionToggle, SystemTweaks.SetPointerPrecision, SystemTweaks.TryGetPointerPrecision);
+        // 开关表示「关闭提高指针精度」，写入时要反过来
+        ApplyInverted(PointerPrecisionToggle, SystemTweaks.SetPointerPrecision, SystemTweaks.TryGetPointerPrecision);
     }
 
     private void HighPerformance_Toggled(object sender, RoutedEventArgs e)
@@ -401,6 +417,27 @@ public sealed partial class SystemSettingsView : UserControl
         {
             _loading = true;
             toggle.IsOn = actual;
+            _loading = false;
+        }
+
+        Report(ok);
+    }
+
+    /// <summary>写入 → 回读 → 以系统实际值纠正开关 → 反馈结果（开关与系统状态取反）。</summary>
+    private void ApplyInverted(ToggleSwitch toggle, Writer write, Reader read)
+    {
+        if (_loading)
+        {
+            return;
+        }
+
+        bool wanted = !toggle.IsOn;
+        bool ok = write(wanted);
+
+        if (read(out bool actual) && actual != wanted)
+        {
+            _loading = true;
+            toggle.IsOn = !actual;
             _loading = false;
         }
 

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="ArtkTools.Views.DotnetPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ct="using:ArtkTools.Services.ComputerTools"
+    mc:Ignorable="d"
+    Background="Transparent"
+    NavigationCacheMode="Required"
+    Loaded="Page_Loaded">
+
+    <Grid Padding="36,18,40,32" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Spacing="6">
+            <Button Padding="0" Background="Transparent" BorderThickness="0"
+                    HorizontalAlignment="Left" Click="Back_Click">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon Glyph="&#xE72B;" FontSize="13" />
+                    <TextBlock Text="电脑工具" FontSize="12"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </Button>
+
+            <Grid>
+                <StackPanel Spacing="2">
+                    <TextBlock Text=".NET 环境补全" Style="{StaticResource PageTitleStyle}" />
+                    <TextBlock Text="检测本机 .NET Runtime / SDK / .NET Framework，缺少的版本可一键下载安装"
+                               Style="{StaticResource CaptionStyle}" TextWrapping="Wrap" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Spacing="8"
+                            HorizontalAlignment="Right" VerticalAlignment="Top">
+                    <ProgressRing x:Name="DotnetRing" Width="18" Height="18" IsActive="False" />
+                    <Button x:Name="DotnetInstallAllButton" Content="一键安装"
+                            Padding="12,6" Click="DotnetInstallAll_Click" />
+                    <Button x:Name="DotnetRefreshButton" Content="刷新"
+                            Padding="12,6" Click="DotnetRefresh_Click" />
+                </StackPanel>
+            </Grid>
+
+            <TextBlock x:Name="DotnetStatusText" Style="{StaticResource MetaStyle}" TextWrapping="Wrap" />
+            <StackPanel x:Name="DotnetProgressPanel" Visibility="Collapsed" Spacing="4">
+                <ProgressBar x:Name="DotnetProgress" Height="4" />
+                <TextBlock x:Name="DotnetProgressText" Style="{StaticResource MetaStyle}" />
+            </StackPanel>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <Border Style="{StaticResource CardStyle}" Padding="4">
+                <ItemsControl x:Name="DotnetList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="ct:DotnetInstallableItem">
+                            <Border BorderBrush="{ThemeResource GridLineBrush}"
+                                    BorderThickness="0,0,0,1">
+                                <Grid Padding="16,10" ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="{x:Bind DisplayName}" FontSize="13.5"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{x:Bind MetaText}" Style="{StaticResource MetaStyle}" />
+                                    </StackPanel>
+
+                                    <TextBlock Grid.Column="1" Text="{x:Bind StatusText}"
+                                               VerticalAlignment="Center"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                                    <Button Grid.Column="2" Content="安装" Padding="14,6"
+                                            Click="DotnetInstall_Click"
+                                            IsEnabled="{x:Bind CanInstall}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
+        </ScrollViewer>
+    </Grid>
+</Page>

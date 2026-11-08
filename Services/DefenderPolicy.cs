@@ -2,7 +2,7 @@ using System;
 using System.Security.Principal;
 using Microsoft.Win32;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>
 /// 「关闭防病毒」开关：同时管组策略里

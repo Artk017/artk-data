@@ -7,9 +7,9 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using WinUIDemo.Services;
+using ArtkTools.Services;
 
-namespace WinUIDemo.Views;
+namespace ArtkTools.Views;
 
 /// <summary>仿 Windows 命令提示符的 adb / fastboot 命令行窗口。</summary>
 public sealed class CommandConsoleDialog : ContentDialog

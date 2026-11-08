@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>自动识别出来的软件信息，字段和添加 / 编辑对话框一一对应。</summary>
 public sealed class AutoFilled

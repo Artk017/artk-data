@@ -8,11 +8,11 @@ internal static class ProductInfo
         DisplayName = "Artk Tools",
         SetupResourceName = "ArtkToolsInternalSetup.exe",
         InnerSetupFileName = "ArtkTools-win-Setup.exe",
-        MainExeFileName = "WinUIDemo.exe",
+        MainExeFileName = "ArtkTools.exe",
         InstallFolderName = "Artk Tools",
         ShortcutName = "Artk Tools.lnk",
         PackId = "NovaWorkbench",
-        RunningExeNames = new[] { "WinUIDemo.exe", "Nova.exe", "Update.exe" },
+        RunningExeNames = new[] { "ArtkTools.exe", "Nova.exe", "Update.exe" },
         SupportsService = false,
     };
 }

@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Microsoft.Win32;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>
 /// 卸载前的清理：删除 Nova 自身数据目录（%LOCALAPPDATA%\Nova）和 Windows 开始菜单

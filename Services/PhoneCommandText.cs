@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>把 adb / fastboot 的英文输出翻译成中文（只翻译常见提示，未知内容原样保留）。</summary>
 public static class PhoneCommandText

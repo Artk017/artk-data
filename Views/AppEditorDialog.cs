@@ -6,9 +6,9 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Shapes;
-using WinUIDemo.Services;
+using ArtkTools.Services;
 
-namespace WinUIDemo.Views;
+namespace ArtkTools.Views;
 
 /// <summary>
 /// 编辑一款软件（添加走「添加软件」窗口：在网页里点下载就自动抓直链和图标）。

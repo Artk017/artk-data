@@ -1,9 +1,9 @@
 using System;
 using Microsoft.UI.Xaml;
-using WinUIDemo.Views;
+using ArtkTools.Views;
 using Windows.Graphics;
 
-namespace WinUIDemo.Helpers;
+namespace ArtkTools.Helpers;
 
 /// <summary>
 /// 一个弹窗的「槽位」：负责懒创建、复用（已开着就提到前面）以及关闭后释放引用。

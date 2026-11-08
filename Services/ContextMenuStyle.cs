@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using Microsoft.Win32;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>
 /// 「右键菜单样式」：在 Windows 11 的新式精简菜单和 Windows 10 的完整经典菜单之间切换。

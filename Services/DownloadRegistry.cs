@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>
 /// 记录每个软件已下载安装包的路径，持久化到 %LOCALAPPDATA%\Nova\downloads.json。

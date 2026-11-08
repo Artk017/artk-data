@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>FileKey 的清理方式。</summary>
 public enum FileKeyFlag

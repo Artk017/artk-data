@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using Microsoft.Win32;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>
 /// 「关闭请勿打扰」：把 Windows 11 通知页里的请勿打扰配置改到位。

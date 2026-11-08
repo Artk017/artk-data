@@ -1,10 +1,13 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using WinUIDemo.Services;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Input;
+using ArtkTools.Services;
 
-namespace WinUIDemo.Views;
+namespace ArtkTools.Views;
 
 /// <summary>
 /// Safe 页：上面是防护状态展示，最下面的「系统与权限」卡片是真实生效的开关
@@ -15,11 +18,78 @@ public sealed partial class SafePage : Page
 {
     private bool _loading = true;
 
+    // 悬停说明：Flyout 自带动画，鼠标停住 140ms 就弹出，比系统 ToolTip 的一秒快得多
+    private readonly TextBlock _hoverText = new()
+    {
+        FontSize = 12.5,
+        TextWrapping = TextWrapping.Wrap,
+        MaxWidth = 320,
+    };
+
+    private readonly Flyout _hoverFlyout;
+    private DispatcherQueueTimer? _hoverTimer;
+    private FrameworkElement? _hoverRow;
+
     public SafePage()
     {
         InitializeComponent();
 
+        _hoverFlyout = new Flyout
+        {
+            Content = _hoverText,
+            Placement = FlyoutPlacementMode.Top,
+            ShowMode = FlyoutShowMode.Transient,
+        };
+
         Loaded += (_, _) => LoadAll();
+    }
+
+    // ---------------- 悬停说明 ----------------
+
+    private void Row_PointerMoved(object sender, PointerRoutedEventArgs e)
+    {
+        // PointerMoved 会从文字 / 开关 / 按钮冒泡到整行，鼠标停在开关上也能触发
+        if (sender is not FrameworkElement row || row.Tag is not string text || text.Length == 0)
+        {
+            return;
+        }
+
+        if (_hoverRow == row)
+        {
+            return;
+        }
+
+        _hoverRow = row;
+        _hoverText.Text = text;
+
+        _hoverTimer ??= DispatcherQueue.CreateTimer();
+        _hoverTimer.Stop();
+        _hoverTimer.Interval = TimeSpan.FromMilliseconds(140);
+        _hoverTimer.IsRepeating = false;
+        _hoverTimer.Tick -= HoverTimer_Tick;
+        _hoverTimer.Tick += HoverTimer_Tick;
+        _hoverTimer.Start();
+    }
+
+    private void HoverTimer_Tick(DispatcherQueueTimer sender, object args)
+    {
+        sender.Stop();
+
+        if (_hoverRow is not null && !_hoverFlyout.IsOpen)
+        {
+            _hoverFlyout.ShowAt(_hoverRow);
+        }
+    }
+
+    private void Row_PointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        _hoverTimer?.Stop();
+        _hoverRow = null;
+
+        if (_hoverFlyout.IsOpen)
+        {
+            _hoverFlyout.Hide();
+        }
     }
 
     private void LoadAll()

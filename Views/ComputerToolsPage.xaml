@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="ArtkTools.Views.ComputerToolsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="Transparent"
+    NavigationCacheMode="Required"
+    Loaded="Page_Loaded">
+
+    <Grid Padding="36,18,40,32" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- ============ 页头 ============ -->
+        <StackPanel Spacing="4">
+            <TextBlock Text="电脑工具" Style="{StaticResource PageTitleStyle}" />
+            <TextBlock Text="选择一个工具进入，所有检测都是只读的，需要改系统时才会请求管理员权限"
+                       Style="{StaticResource CaptionStyle}" TextWrapping="Wrap" />
+        </StackPanel>
+
+        <!-- ============ 工具卡片 ============ -->
+        <Grid Grid.Row="1" ColumnSpacing="16" RowSpacing="12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- 运行库修复 -->
+            <Button Grid.Row="0" Grid.Column="0"
+                    Style="{StaticResource TileButtonStyle}"
+                    Padding="12" Height="128"
+                    HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top"
+                    Click="OpenRuntime_Click">
+                <Grid RowSpacing="6">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Border Width="32" Height="32" CornerRadius="8"
+                            Background="{ThemeResource IconTileBrush}" HorizontalAlignment="Left">
+                        <FontIcon Glyph="&#xE74C;" FontSize="15" />
+                    </Border>
+
+                    <StackPanel Grid.Row="1" Spacing="4">
+                        <TextBlock Text="运行库修复" FontSize="15" FontWeight="SemiBold" />
+                        <TextBlock Text="检测并补全 VC++ 运行库、.NET Framework 与 DirectX 旧版 DLL"
+                                   Style="{StaticResource CaptionStyle}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="3" Text="打开  →" Style="{StaticResource MetaStyle}" />
+                </Grid>
+            </Button>
+
+            <!-- 右键菜单管理 -->
+            <Button Grid.Row="0" Grid.Column="1"
+                    Style="{StaticResource TileButtonStyle}"
+                    Padding="12" Height="128"
+                    HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top"
+                    Click="OpenContext_Click">
+                <Grid RowSpacing="6">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Border Width="32" Height="32" CornerRadius="8"
+                            Background="{ThemeResource IconTileBrush}" HorizontalAlignment="Left">
+                        <FontIcon Glyph="&#xE8BD;" FontSize="15" />
+                    </Border>
+
+                    <StackPanel Grid.Row="1" Spacing="4">
+                        <TextBlock Text="右键菜单管理" FontSize="15" FontWeight="SemiBold" />
+                        <TextBlock Text="按场景管理右键菜单，显示来源软件与图标"
+                                   Style="{StaticResource CaptionStyle}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="3" Text="打开  →" Style="{StaticResource MetaStyle}" />
+                </Grid>
+            </Button>
+
+            <!-- .NET 环境补全 -->
+            <Button Grid.Row="1" Grid.Column="0"
+                    Style="{StaticResource TileButtonStyle}"
+                    Padding="12" Height="128"
+                    HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top"
+                    Click="OpenDotnet_Click">
+                <Grid RowSpacing="6">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Border Width="32" Height="32" CornerRadius="8"
+                            Background="{ThemeResource IconTileBrush}" HorizontalAlignment="Left">
+                        <FontIcon Glyph="&#xE943;" FontSize="15" />
+                    </Border>
+
+                    <StackPanel Grid.Row="1" Spacing="4">
+                        <TextBlock Text=".NET 环境补全" FontSize="15" FontWeight="SemiBold" />
+                        <TextBlock Text="检测并一键安装缺失的 .NET Runtime / SDK"
+                                   Style="{StaticResource CaptionStyle}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="3" Text="打开  →" Style="{StaticResource MetaStyle}" />
+                </Grid>
+            </Button>
+
+            <!-- 磁盘健康 -->
+            <Button Grid.Row="1" Grid.Column="1"
+                    Style="{StaticResource TileButtonStyle}"
+                    Padding="12" Height="128"
+                    HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top"
+                    Click="OpenDisk_Click">
+                <Grid RowSpacing="6">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Border Width="32" Height="32" CornerRadius="8"
+                            Background="{ThemeResource IconTileBrush}" HorizontalAlignment="Left">
+                        <FontIcon Glyph="&#xEDA2;" FontSize="15" />
+                    </Border>
+
+                    <StackPanel Grid.Row="1" Spacing="4">
+                        <TextBlock Text="磁盘健康" FontSize="15" FontWeight="SemiBold" />
+                        <TextBlock Text="读取 SMART 温度、健康度与磨损"
+                                   Style="{StaticResource CaptionStyle}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="3" Text="打开  →" Style="{StaticResource MetaStyle}" />
+                </Grid>
+            </Button>
+
+            <!-- Geek 卸载 -->
+            <Button Grid.Row="2" Grid.Column="0"
+                    Style="{StaticResource TileButtonStyle}"
+                    Padding="12" Height="128"
+                    HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top"
+                    Click="OpenGeek_Click">
+                <Grid RowSpacing="6">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Border Width="32" Height="32" CornerRadius="8"
+                            Background="{ThemeResource IconTileBrush}" HorizontalAlignment="Left">
+                        <Grid>
+                            <FontIcon x:Name="GeekFallbackIcon" Glyph="&#xE7B8;" FontSize="15" />
+                            <Image x:Name="GeekIcon" Width="24" Height="24"
+                                   Stretch="Uniform" Visibility="Collapsed" />
+                        </Grid>
+                    </Border>
+
+                    <StackPanel Grid.Row="1" Spacing="4">
+                        <TextBlock Text="Geek 卸载" FontSize="15" FontWeight="SemiBold" />
+                        <TextBlock Text="深度卸载软件并清理卸载残留"
+                                   Style="{StaticResource CaptionStyle}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="3" Text="打开  →" Style="{StaticResource MetaStyle}" />
+                </Grid>
+            </Button>
+        </Grid>
+    </Grid>
+</Page>

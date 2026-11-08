@@ -6,7 +6,7 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 
-namespace WinUIDemo.Helpers;
+namespace ArtkTools.Helpers;
 
 /// <summary>
 /// 滑动条提交策略：拖动过程中只预览（更新文字），不触发写入；

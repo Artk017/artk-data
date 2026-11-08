@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace WinUIDemo.Helpers;
+namespace ArtkTools.Helpers;
 
 /// <summary>
 /// 窗口置前的小工具。WinUI 的 <c>Window.Activate()</c> 在刚创建、

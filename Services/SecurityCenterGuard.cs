@@ -5,7 +5,7 @@ using System.IO;
 using System.Text;
 using Microsoft.Win32;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>
 /// 「安全中心设置」一键开关：把 Windows 安全中心里那批开关批量关掉 / 恢复。

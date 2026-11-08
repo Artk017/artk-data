@@ -8,7 +8,7 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using Microsoft.Win32;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>当前用户对某个键是否已拥有「完全控制」。</summary>
 public enum AclState

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Page
-    x:Class="WinUIDemo.Views.SettingsPage"
+    x:Class="ArtkTools.Views.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Background="Transparent"
@@ -119,6 +119,7 @@
                             <ComboBoxItem Content="软件" />
                             <ComboBoxItem Content="Game" />
                             <ComboBoxItem Content="Safe" />
+                            <ComboBoxItem Content="电脑工具" />
                             <ComboBoxItem Content="手机工具" />
                         </ComboBox>
                     </Grid>

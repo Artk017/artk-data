@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 public enum KnownFolderKind
 {

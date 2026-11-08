@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using Windows.Graphics;
 
-namespace WinUIDemo.Helpers;
+namespace ArtkTools.Helpers;
 
 /// <summary>
 /// 给弹窗加最小 / 最大尺寸限制。

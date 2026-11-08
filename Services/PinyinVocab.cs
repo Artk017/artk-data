@@ -9,7 +9,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>服务器上保存的微软词汇信息（GET /api/vocab 的返回体）。</summary>
 public sealed class PinyinVocabInfo

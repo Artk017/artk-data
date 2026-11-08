@@ -1,7 +1,7 @@
 using Microsoft.UI.Xaml.Controls;
-using WinUIDemo.Helpers;
+using ArtkTools.Helpers;
 
-namespace WinUIDemo.Views;
+namespace ArtkTools.Views;
 
 /// <summary>
 /// 「系统信息」弹窗的内容：设备名 / 处理器 / 内存 / 显卡 / 操作系统。

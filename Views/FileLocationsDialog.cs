@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using WinUIDemo.Services;
+using ArtkTools.Services;
 
-namespace WinUIDemo.Views;
+namespace ArtkTools.Views;
 
 /// <summary>
 /// 「文件位置」弹窗：把 下载 / 文档 / 图片 / 视频 的保存位置改到别的磁盘，

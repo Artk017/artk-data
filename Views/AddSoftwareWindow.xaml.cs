@@ -10,11 +10,11 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.Web.WebView2.Core;
-using WinUIDemo.Helpers;
-using WinUIDemo.Services;
+using ArtkTools.Helpers;
+using ArtkTools.Services;
 using Windows.Graphics;
 
-namespace WinUIDemo.Views;
+namespace ArtkTools.Views;
 
 /// <summary>
 /// 「添加软件」窗口：真的浏览器 + 点下载就抓直链。

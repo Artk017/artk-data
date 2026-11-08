@@ -2,7 +2,7 @@ using System;
 using System.Security.Principal;
 using Microsoft.Win32;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>
 /// 「应用运行通知」开关：控制「用户账户控制设置」里滑块的位置。

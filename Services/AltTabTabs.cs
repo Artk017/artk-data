@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Win32;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>
 /// 「按 Alt+Tab 时显示应用中的标签页」开关。

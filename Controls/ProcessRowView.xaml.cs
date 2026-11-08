@@ -1,8 +1,8 @@
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using WinUIDemo.Services;
+using ArtkTools.Services;
 
-namespace WinUIDemo.Controls;
+namespace ArtkTools.Controls;
 
 public sealed partial class ProcessRowView : UserControl
 {

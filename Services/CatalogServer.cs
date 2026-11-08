@@ -8,7 +8,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>清单条目的传输结构，字段和 NovaServer 的 AppItem 一致（camelCase）。</summary>
 public sealed class AppDto

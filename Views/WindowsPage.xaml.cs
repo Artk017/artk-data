@@ -1,9 +1,9 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using WinUIDemo.Helpers;
+using ArtkTools.Helpers;
 using Windows.Graphics;
 
-namespace WinUIDemo.Views;
+namespace ArtkTools.Views;
 
 /// <summary>Windows 页：系统设置与系统信息直接展开，清理功能在单独的“垃圾清理”页。</summary>
 public sealed partial class WindowsPage : Page

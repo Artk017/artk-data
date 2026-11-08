@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>软件页里的一个条目：要么有官方直链（应用内下载），要么自动解析，要么只能跳官网下载页。</summary>
 public sealed class AppEntry

@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Microsoft.UI.Xaml;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>左侧列表里的一行清理项目。</summary>
 public sealed class CleanerEntryItem : INotifyPropertyChanged

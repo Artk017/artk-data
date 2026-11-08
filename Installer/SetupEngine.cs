@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -6,12 +7,26 @@ using System.Threading;
 namespace NovaSetup;
 
 /// <summary>真正执行安装：释放内嵌的 Velopack Setup，静默安装到指定目录。
-/// 快捷方式 / 启动等后续操作不在这里做，等用户在完成页点「确定」后调用 <see cref="ApplyPostInstall"/>。</summary>
+/// 快捷方式 / 启动等后续操作不在这里做，等用户在完成页点「确定」后调用 <see cref="ApplyPostInstall"/>。
+/// 安装过程中通过 progress 汇报 0-100 的百分比，通过 detail 汇报 Velopack 的原始输出（进日志面板）。</summary>
 internal static class SetupEngine
 {
     public static int Run(InstallOptions o, Action<string>? log, CancellationToken token = default)
     {
+        return Run(o, log, null, null, token);
+    }
+
+    public static int Run(
+        InstallOptions o,
+        Action<string>? log,
+        IProgress<int>? progress = null,
+        Action<string>? detail = null,
+        CancellationToken token = default)
+    {
+        void Report(int percent) => progress?.Report(Math.Clamp(percent, 0, 100));
+
         string tmp = Path.Combine(Path.GetTempPath(), "nova-setup-" + Guid.NewGuid().ToString("N"));
+        var seen = new ConcurrentDictionary<string, byte>(StringComparer.Ordinal);
 
         try
         {
@@ -22,8 +37,11 @@ internal static class SetupEngine
 
             Directory.CreateDirectory(tmp);
             string setupPath = Path.Combine(tmp, ProductInfo.Current.InnerSetupFileName);
+            string setupLog = Path.Combine(tmp, "setup.log");
 
             log?.Invoke("正在准备安装文件…");
+            Report(2);
+
             using (Stream? res = typeof(SetupEngine).Assembly.GetManifestResourceStream(ProductInfo.Current.SetupResourceName))
             {
                 if (res == null)
@@ -33,10 +51,31 @@ internal static class SetupEngine
                 }
 
                 using var fs = new FileStream(setupPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920);
-                res.CopyTo(fs);
+                byte[] buffer = new byte[81920];
+                long total = res.Length;
+                long copied = 0;
+                int read;
+
+                while ((read = res.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    if (token.IsCancellationRequested)
+                    {
+                        return 2;
+                    }
+
+                    fs.Write(buffer, 0, read);
+                    copied += read;
+
+                    if (total > 0)
+                    {
+                        // 释放内嵌安装包占整条进度的 0-24%
+                        Report(2 + (int)(22 * copied / total));
+                    }
+                }
             }
 
             string dir = NormalizeDir(o);
+            Report(25);
 
             if (token.IsCancellationRequested)
             {
@@ -62,6 +101,7 @@ internal static class SetupEngine
 
             log?.Invoke($"正在关闭正在运行的 {ProductInfo.Current.DisplayName}…");
             CloseRunningInstances(dir);
+            Report(27);
 
             if (token.IsCancellationRequested)
             {
@@ -73,12 +113,14 @@ internal static class SetupEngine
             // 配置（server.json / ui.json）和清单数据放在安装根目录，Velopack 升级会把整个根目录换掉，
             // 所以先备份，装完（不管成功失败）再放回去
             string? userData = BackupUserFiles(dir, tmp, log);
+            Report(30);
 
             // 上一次安装失败时 Velopack 会把目录改名成「<目录>.<16位随机串>」留着回滚，这些残留会让下一次安装更容易失败
             CleanupRollbackLeftovers(dir, TimeSpan.FromMinutes(10), log);
+            Report(32);
 
             var output = new StringBuilder();
-            int code = RunInnerSetup(setupPath, dir, tmp, token, output);
+            int code = RunInnerSetup(setupPath, dir, tmp, setupLog, token, output, detail, Report, seen);
 
             // 上一次安装被中断、或文件被杀软短暂占用时，清掉残留重试一次通常就能过
             if (code != 0 && code != 2 && !token.IsCancellationRequested)
@@ -86,9 +128,10 @@ internal static class SetupEngine
                 log?.Invoke($"安装未成功（退出码 {code}），清理残留后重试一次…");
                 CleanupRollbackLeftovers(dir, TimeSpan.Zero, log);
                 Thread.Sleep(1500);
-                code = RunInnerSetup(setupPath, dir, tmp, token, output);
+                code = RunInnerSetup(setupPath, dir, tmp, setupLog, token, output, detail, Report, seen);
             }
 
+            Report(94);
             RestoreUserFiles(userData, dir, log);
 
             if (token.IsCancellationRequested)
@@ -99,11 +142,10 @@ internal static class SetupEngine
 
             if (code != 0)
             {
-                string logFile = Path.Combine(tmp, "setup.log");
-                string detail = ReadFailureDetail(logFile, output);
-                string saved = SaveFailureLog(logFile);
+                string detailText = ReadFailureDetail(setupLog, output);
+                string saved = SaveFailureLog(setupLog);
 
-                string message = $"安装失败（退出码 {code}）。{(detail.Length > 0 ? detail : $"请确认目标目录可写、且没有正在运行的 {ProductInfo.Current.DisplayName}。")}";
+                string message = $"安装失败（退出码 {code}）。{(detailText.Length > 0 ? detailText : $"请确认目标目录可写、且没有正在运行的 {ProductInfo.Current.DisplayName}。")}";
                 if (saved.Length > 0)
                 {
                     message += $"（完整日志：{saved}）";
@@ -113,6 +155,7 @@ internal static class SetupEngine
                 return code;
             }
 
+            Report(100);
             log?.Invoke("安装完成。");
             return 0;
         }
@@ -147,7 +190,21 @@ internal static class SetupEngine
         }
     }
 
-    private static int RunInnerSetup(string setupPath, string dir, string tmp, CancellationToken token, StringBuilder output)
+    /// <summary>
+    /// 执行内嵌的 Velopack Setup，并把它的原始日志实时吐给 detail。
+    /// 进度只能估算（Velopack 静默安装不报百分比）：按经过时间平滑逼近 92%，
+    /// 真正结束时再跳到 94% / 100%，日志面板里能实时看到它到底做到哪一步。
+    /// </summary>
+    private static int RunInnerSetup(
+        string setupPath,
+        string dir,
+        string tmp,
+        string logFile,
+        CancellationToken token,
+        StringBuilder output,
+        Action<string>? detail,
+        Action<int> report,
+        ConcurrentDictionary<string, byte> seen)
     {
         var psi = new ProcessStartInfo(setupPath)
         {
@@ -161,7 +218,7 @@ internal static class SetupEngine
         psi.ArgumentList.Add("--installto");
         psi.ArgumentList.Add(dir);
         psi.ArgumentList.Add("--log");
-        psi.ArgumentList.Add(Path.Combine(tmp, "setup.log"));
+        psi.ArgumentList.Add(logFile);
 
         using var proc = Process.Start(psi);
         if (proc == null)
@@ -185,13 +242,149 @@ internal static class SetupEngine
             }
         });
 
-        proc.OutputDataReceived += (_, e) => { if (e.Data != null) output.AppendLine(e.Data); };
-        proc.ErrorDataReceived += (_, e) => { if (e.Data != null) output.AppendLine(e.Data); };
+        proc.OutputDataReceived += (_, e) =>
+        {
+            if (e.Data != null)
+            {
+                lock (output)
+                {
+                    output.AppendLine(e.Data);
+                }
+
+                Forward(detail, seen, e.Data);
+            }
+        };
+
+        proc.ErrorDataReceived += (_, e) =>
+        {
+            if (e.Data != null)
+            {
+                lock (output)
+                {
+                    output.AppendLine(e.Data);
+                }
+
+                Forward(detail, seen, e.Data);
+            }
+        };
+
         proc.BeginOutputReadLine();
         proc.BeginErrorReadLine();
+
+        var clock = Stopwatch.StartNew();
+        int logLines = 0;
+
+        while (!proc.HasExited)
+        {
+            if (token.IsCancellationRequested)
+            {
+                break;
+            }
+
+            Thread.Sleep(250);
+
+            PumpLogFile(logFile, ref logLines, detail, seen);
+
+            // 33% → 92%：18 秒的时间常数，长时间安装也还在缓慢前进
+            double seconds = clock.Elapsed.TotalSeconds;
+            report(33 + (int)(59 * (1 - Math.Exp(-seconds / 18.0))));
+        }
+
         proc.WaitForExit();
+        PumpLogFile(logFile, ref logLines, detail, seen);
+
+        if (token.IsCancellationRequested)
+        {
+            return 2;
+        }
 
         return proc.ExitCode;
+    }
+
+    /// <summary>把 setup.log 里新出现的行转发到日志面板（Velopack 的真实进度都在这个文件里）。</summary>
+    private static void PumpLogFile(
+        string file,
+        ref int startLine,
+        Action<string>? detail,
+        ConcurrentDictionary<string, byte> seen)
+    {
+        try
+        {
+            if (!File.Exists(file))
+            {
+                return;
+            }
+
+            string text;
+
+            using (var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            using (var reader = new StreamReader(stream, Encoding.UTF8))
+            {
+                text = reader.ReadToEnd();
+            }
+
+            if (text.Length == 0)
+            {
+                return;
+            }
+
+            string[] lines = text.Replace("\r", string.Empty).Split('\n');
+
+            // 最后一行可能还在写入，先不处理，下一轮再补
+            int complete = lines.Length;
+
+            if (!text.EndsWith('\n'))
+            {
+                complete--;
+            }
+
+            if (complete < startLine)
+            {
+                startLine = 0;
+            }
+
+            for (int i = startLine; i < complete; i++)
+            {
+                Forward(detail, seen, lines[i]);
+            }
+
+            if (complete > startLine)
+            {
+                startLine = complete;
+            }
+        }
+        catch
+        {
+            // 日志文件被占用 / 不存在都无所谓
+        }
+    }
+
+    private static void Forward(Action<string>? detail, ConcurrentDictionary<string, byte> seen, string line)
+    {
+        if (detail == null)
+        {
+            return;
+        }
+
+        string text = line.Trim();
+
+        if (text.Length == 0)
+        {
+            return;
+        }
+
+        // stdout 和 setup.log 会有重复行，转发一次就够了
+        if (!seen.TryAdd(text, 0))
+        {
+            return;
+        }
+
+        if (seen.Count > 4000)
+        {
+            seen.Clear();
+        }
+
+        detail(text);
     }
 
     /// <summary>

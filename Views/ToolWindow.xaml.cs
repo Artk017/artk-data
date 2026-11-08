@@ -5,11 +5,11 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using WinUIDemo.Helpers;
+using ArtkTools.Helpers;
 using Windows.Graphics;
 using Windows.UI;
 
-namespace WinUIDemo.Views;
+namespace ArtkTools.Views;
 
 /// <summary>
 /// 所有工具弹窗共用的外壳：自绘标题栏 + 图钉（置顶）+ 可缩放 + 记住尺寸 + 打开时置前。

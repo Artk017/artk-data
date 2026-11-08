@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>
 /// 读取 Windows 的激活状态。

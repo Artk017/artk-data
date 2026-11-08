@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>一条从「Nova 直链工具」里抓回来的下载地址。</summary>
 public sealed class StoredLink

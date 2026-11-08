@@ -8,9 +8,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using WinUIDemo.Services;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Shapes;
+using Windows.Foundation;
+using ArtkTools.Services;
 
-namespace WinUIDemo.Views;
+namespace ArtkTools.Views;
 
 /// <summary>垃圾清理页：Windows 清理规则、扫描与删除。</summary>
 public sealed partial class JunkCleanPage : Page
@@ -26,6 +29,7 @@ public sealed partial class JunkCleanPage : Page
     private CancellationTokenSource? _cts;
     private bool _loaded;
     private bool _busy;
+    private bool _savingSettings;
     private bool _suppressSave;
 
     public JunkCleanPage()
@@ -58,6 +62,8 @@ public sealed partial class JunkCleanPage : Page
             _allEntries = await CleanerLibrary.LoadInstalledAsync();
 
             InitializeSelection();
+            await LoadServerSelectionAsync();
+
             BuildCategories(SearchBox.Text);
             UpdateSelectionSummary();
             UpdateCategoryEmptyState();
@@ -84,19 +90,7 @@ public sealed partial class JunkCleanPage : Page
         if (settings.CleanerSelectionSaved)
         {
             // 旧版本把翻译后的中文名也写进了勾选集，这里统一映射回数据库原始名称
-            _selectedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var saved in settings.CleanerSelection)
-            {
-                var entry = _allEntries.FirstOrDefault(e =>
-                    string.Equals(e.Name, saved, StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(CleanerNameTranslator.Translate(e.Name), saved, StringComparison.OrdinalIgnoreCase));
-
-                if (entry is not null)
-                {
-                    _selectedNames.Add(entry.Name);
-                }
-            }
+            ApplySavedNames(settings.CleanerSelection);
         }
         else
         {
@@ -104,6 +98,52 @@ public sealed partial class JunkCleanPage : Page
             _selectedNames = new HashSet<string>(
                 _allEntries.Where(e => e.Default).Select(e => e.Name),
                 StringComparer.OrdinalIgnoreCase);
+        }
+    }
+
+    /// <summary>把服务器上保存的勾选当作最新设置读回来；服务器上没有或连不上时继续用本机设置。</summary>
+    private async Task LoadServerSelectionAsync()
+    {
+        var remote = await CleanerSettingsServer.FetchAsync();
+
+        if (!remote.Ok)
+        {
+            SaveSettingsHintText.Text = string.IsNullOrWhiteSpace(remote.Message)
+                ? "未连接服务器，当前使用本机勾选"
+                : $"未读取服务器设置（{remote.Message}），当前使用本机勾选";
+            return;
+        }
+
+        if (!remote.Exists)
+        {
+            SaveSettingsHintText.Text = "服务器还没有保存过勾选";
+            return;
+        }
+
+        ApplySavedNames(remote.Selected);
+        SaveSelection();
+
+        int matched = _selectedNames.Count;
+        SaveSettingsHintText.Text = remote.UpdatedAt is DateTimeOffset at
+            ? $"已载入服务器设置：{matched} 项（{at.LocalDateTime:MM-dd HH:mm}）"
+            : $"已载入服务器设置：{matched} 项";
+    }
+
+    /// <summary>把保存的项目名映射回本机规则库里的原始名称（兼容旧版存的中文翻译名）。</summary>
+    private void ApplySavedNames(IEnumerable<string> saved)
+    {
+        _selectedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (string name in saved)
+        {
+            var entry = _allEntries.FirstOrDefault(e =>
+                string.Equals(e.Name, name, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(CleanerNameTranslator.Translate(e.Name), name, StringComparison.OrdinalIgnoreCase));
+
+            if (entry is not null)
+            {
+                _selectedNames.Add(entry.Name);
+            }
         }
     }
 
@@ -231,11 +271,49 @@ public sealed partial class JunkCleanPage : Page
         if (_allEntries.Count == 0)
         {
             SelectionSummaryText.Text = "";
+            GaugePercentText.Text = "0%";
+            GaugeSubText.Text = "已选 0 / 0 项";
+            UpdateGauge(0);
             return;
         }
 
+        int total = _allEntries.Count;
         int selected = _allEntries.Count(e => _selectedNames.Contains(e.Name));
-        SelectionSummaryText.Text = $"已选 {selected} / {_allEntries.Count} 项";
+        double fraction = (double)selected / total;
+
+        SelectionSummaryText.Text = $"已选 {selected} / {total} 项";
+        GaugePercentText.Text = $"{fraction * 100:0}%";
+        GaugeSubText.Text = $"已选 {selected} / {total} 项";
+        UpdateGauge(fraction);
+    }
+
+    /// <summary>按勾选占比画仪表图的圆弧：180° 起点向左，顺时针扫到右侧。</summary>
+    private void UpdateGauge(double fraction)
+    {
+        const double cx = 98;
+        const double cy = 110;
+        const double radius = 80;
+
+        double value = Math.Clamp(fraction, 0, 1);
+
+        var geometry = new PathGeometry();
+        var figure = new PathFigure { StartPoint = new Point(cx - radius, cy) };
+
+        if (value > 0.0001)
+        {
+            double angle = Math.PI * (1 + value);
+
+            figure.Segments.Add(new ArcSegment
+            {
+                Point = new Point(cx + radius * Math.Cos(angle), cy + radius * Math.Sin(angle)),
+                Size = new Size(radius, radius),
+                SweepDirection = SweepDirection.Clockwise,
+                IsLargeArc = false,
+            });
+        }
+
+        geometry.Figures.Add(figure);
+        GaugeValueArc.Data = geometry;
     }
 
     private void SaveSelection()
@@ -249,6 +327,44 @@ public sealed partial class JunkCleanPage : Page
         settings.CleanerSelection = _selectedNames.ToList();
         settings.CleanerSelectionSaved = true;
         settings.Save();
+    }
+
+    // ---------------- 保存到服务器 ----------------
+
+    private async void SaveSettings_Click(object sender, RoutedEventArgs e)
+    {
+        if (_busy || _savingSettings)
+        {
+            return;
+        }
+
+        _savingSettings = true;
+        SaveSettingsButton.IsEnabled = false;
+        SaveSettingsRing.Visibility = Visibility.Visible;
+        SaveSettingsRing.IsActive = true;
+        SaveSettingsHintText.Text = "正在保存到服务器…";
+
+        try
+        {
+            SaveSelection();
+
+            var (ok, message) = await CleanerSettingsServer.SaveAsync(_selectedNames);
+
+            SaveSettingsHintText.Text = ok
+                ? $"{message} · {DateTime.Now:HH:mm}"
+                : $"保存失败：{message}";
+        }
+        catch (Exception ex)
+        {
+            SaveSettingsHintText.Text = $"保存失败：{ex.Message}";
+        }
+        finally
+        {
+            _savingSettings = false;
+            SaveSettingsButton.IsEnabled = !_busy;
+            SaveSettingsRing.IsActive = false;
+            SaveSettingsRing.Visibility = Visibility.Collapsed;
+        }
     }
 
     // ---------------- 搜索 / 勾选 ----------------
@@ -382,6 +498,21 @@ public sealed partial class JunkCleanPage : Page
                 ScanProgressBar.Value = done * 100.0 / total;
                 ProgressText.Text = $"{done * 100.0 / total:0}%";
                 TotalSizeText.Text = ScanResult.FormatBytes(totalBytes);
+            }
+
+            // 扫描结果按占用体积从大到小排列：先看最占空间的项目，点击详情也有优先级
+            var ordered = _scanResults
+                .OrderByDescending(r => r.TotalBytes)
+                .ThenBy(r => CleanerNameTranslator.Translate(r.Entry.Name), StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+
+            _scanResults.Clear();
+            _scanResults.AddRange(ordered);
+
+            _results.Clear();
+            foreach (var result in ordered)
+            {
+                _results.Add(new ScanResultItem(result));
             }
 
             ResultTotalText.Text = ScanResult.FormatBytes(totalBytes);
@@ -810,6 +941,7 @@ public sealed partial class JunkCleanPage : Page
         ScanButton.IsEnabled = !busy;
         CleanButton.IsEnabled = !busy && _scanResults.Count > 0;
         CancelButton.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
+        SaveSettingsButton.IsEnabled = !busy && !_savingSettings;
 
         ScanProgressBar.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
         ProgressText.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;

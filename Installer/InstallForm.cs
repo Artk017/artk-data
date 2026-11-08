@@ -1,29 +1,61 @@
-using System.Drawing;
+﻿using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
 
 namespace NovaSetup;
 
+/// <summary>
+/// 经典向导样式的安装程序：白色内容区 + 右上角插画 + 灰色底栏按钮。
+/// 第一页选安装位置和选项，第二页显示实时进度与日志。
+/// </summary>
 internal sealed class InstallForm : Form
 {
-    private readonly Label _titleLabel;
-    private readonly Label _subLabel;
-    private readonly Label _dirLabel;
-    private readonly TextBox _dir;
-    private readonly Button _browse;
-    private readonly Button _resetDefault;
-    private readonly CheckBox _desktop;
-    private readonly CheckBox _launch;
-    private readonly CheckBox? _service;
-    private readonly Button _install;
-    private readonly Button _cancel;
-    private readonly Button _done;
-    private readonly Label _status;
-    private readonly ProgressBar _bar;
-    private readonly bool _isUpdate;
+    private const int WindowWidth = 720;
+    private const int Pad = 36;
+    private const int HeaderHeight = 96;
+    private const int FooterTop = 416;
+    private const int WindowHeight = 480;
+    private const int ContentWidth = WindowWidth - Pad * 2;
+    private const int ButtonHeight = 32;
+    private const int PrimaryWidth = 108;
+    private const int SecondaryWidth = 96;
+
+    private static readonly Color FooterBack = Color.FromArgb(0xF3, 0xF3, 0xF3);
+
     private readonly string _productName = ProductInfo.Current.DisplayName;
+    private readonly string _windowTitle;
+    private readonly bool _isUpdate;
+    private readonly bool _hasService;
+
+    private readonly Label _title = new();
+    private readonly Label _subtitle = new();
+    private readonly InstallGlyph _art = new();
+
+    private readonly Panel _page1 = new();
+    private readonly Label _dirLabel = new();
+    private readonly TextBox _dir = new();
+    private readonly ModernButton _browse = new();
+    private readonly Label _hint = new();
+    private readonly Label _optionsLabel = new();
+    private readonly CheckBox _desktop = new();
+    private readonly CheckBox _launch = new();
+    private CheckBox? _service;
+
+    private readonly Panel _page2 = new();
+    private readonly Label _status = new();
+    private readonly Label _percent = new();
+    private readonly AccentProgressBar _bar = new();
+    private readonly TextBox _log = new();
+
+    private readonly Panel _footer = new();
+    private readonly Panel _footerLine = new();
+    private readonly ModernButton _primary = new();
+    private readonly ModernButton _secondary = new();
+
     private InstallOptions? _options;
+    private CancellationTokenSource? _cts;
     private bool _busy;
+    private bool _finished;
 
     public int ExitCode { get; private set; } = 1;
 
@@ -31,197 +63,254 @@ internal sealed class InstallForm : Form
     {
         ExistingInstall? existing = ExistingInstallDetector.Find();
         _isUpdate = existing is not null;
-        string newVersion = Application.ProductVersion;
-        string title = _isUpdate ? $"更新 {_productName}" : $"安装 {_productName}";
+        _hasService = ProductInfo.Current.SupportsService;
+        _windowTitle = _isUpdate ? $"更新 {_productName}" : $"安装 {_productName}";
 
-        // 服务端多一个「注册后台服务」选项，窗口相应高一点
-        bool hasService = ProductInfo.Current.SupportsService;
-        int height = hasService ? 330 : 305;
-        int statusTop = hasService ? 230 : 204;
-        int barTop = hasService ? 270 : 246;
-        int buttonTop = hasService ? 282 : 260;
-
-        Text = title;
-
+        Text = _windowTitle;
+        Font = new Font("Microsoft YaHei UI", 9F);
+        BackColor = Palette.Card;
+        ForeColor = Palette.TextPrimary;
         FormBorderStyle = FormBorderStyle.FixedDialog;
         StartPosition = FormStartPosition.CenterScreen;
         MaximizeBox = false;
         MinimizeBox = false;
         ShowIcon = true;
         ShowInTaskbar = true;
-        ClientSize = new Size(520, height);
-        Font = new Font("Microsoft YaHei UI", 9F);
-        BackColor = Color.White;
+        DoubleBuffered = true;
+        AutoScaleMode = AutoScaleMode.None;
+        ClientSize = new Size(WindowWidth, WindowHeight);
 
-        _titleLabel = new Label
-        {
-            Text = title,
-            Font = new Font("Microsoft YaHei UI", 16F, FontStyle.Bold),
-            AutoSize = true,
-            Location = new Point(20, 16),
-        };
-
-        string subText = _isUpdate
-            ? $"检测到已安装 {_productName}{(string.IsNullOrWhiteSpace(existing!.Version) ? string.Empty : "（版本 " + existing.Version + "）")}，将更新到 {newVersion}。"
-            : hasService
-                ? "选择安装位置，并可选择是否创建桌面快捷方式、注册后台服务、安装后打开设置界面。"
-                : "选择安装位置，并可选择是否创建桌面快捷方式、安装后立即打开。";
-
-        _subLabel = new Label
-        {
-            Text = subText,
-            // 高度跟着行数走：安装路径长的时候这句话会折成三行，固定高度会把最后一行裁掉一半
-            AutoSize = true,
-            MaximumSize = new Size(480, 0),
-            ForeColor = Color.FromArgb(90, 90, 90),
-            Location = new Point(22, 54),
-        };
-
-        _dirLabel = new Label
-        {
-            Text = $"安装位置（自动使用「{ProductInfo.Current.InstallFolderName}」子目录）",
-            AutoSize = true,
-            Location = new Point(22, 92),
-        };
-
-        _dir = new TextBox
-        {
-            Text = _isUpdate ? existing!.InstallDir : defaults.InstallDir,
-            Location = new Point(22, 114),
-            Width = 360,
-            ReadOnly = _isUpdate,
-        };
-
-        _browse = new Button { Text = "浏览…", Location = new Point(388, 113), Size = new Size(52, 25) };
-        _resetDefault = new Button { Text = "默认", Location = new Point(444, 113), Size = new Size(52, 25) };
-
-        if (_isUpdate)
-        {
-            _browse.Enabled = false;
-            _resetDefault.Enabled = false;
-        }
-
-        _desktop = new CheckBox
-        {
-            Text = "创建桌面快捷方式",
-            Checked = defaults.CreateDesktopShortcut,
-            AutoSize = true,
-            Location = new Point(22, 150),
-        };
-
-        _launch = new CheckBox
-        {
-            Text = hasService ? "安装完成后打开设置界面" : $"安装完成后立即打开 {_productName}",
-            Checked = defaults.LaunchAfterInstall,
-            AutoSize = true,
-            Location = new Point(22, 176),
-        };
-
-        if (hasService)
-        {
-            _service = new CheckBox
-            {
-                Text = "注册开机自启后台服务（需管理员授权）",
-                Checked = defaults.RegisterService,
-                AutoSize = true,
-                Location = new Point(22, 202),
-            };
-        }
-
-        _status = new Label
-        {
-            Text = string.Empty,
-            AutoSize = false,
-            Location = new Point(22, statusTop),
-            Size = new Size(474, 40),
-            ForeColor = Color.FromArgb(90, 90, 90),
-        };
-
-        _bar = new ProgressBar
-        {
-            Style = ProgressBarStyle.Marquee,
-            MarqueeAnimationSpeed = 30,
-            Location = new Point(22, barTop),
-            Size = new Size(474, 6),
-            Visible = false,
-        };
-
-        _install = new Button
-        {
-            Text = _isUpdate ? "更新" : "安装",
-            Location = new Point(330, buttonTop),
-            Size = new Size(90, 30),
-        };
-
-        _cancel = new Button
-        {
-            Text = "取消",
-            Location = new Point(426, buttonTop),
-            Size = new Size(70, 30),
-        };
-
-        _done = new Button
-        {
-            Text = "确定",
-            Location = new Point(426, buttonTop),
-            Size = new Size(70, 30),
-            Visible = false,
-        };
-
-        AcceptButton = _install;
-        CancelButton = _cancel;
+        BuildHeader(existing);
+        BuildPage1(defaults, existing);
+        BuildPage2();
+        BuildFooter();
 
         Controls.AddRange(new Control[]
         {
-            _titleLabel, _subLabel, _dirLabel, _dir, _browse, _resetDefault, _desktop, _launch,
-            _status, _bar, _install, _cancel, _done,
+            _title, _subtitle, _art, _page1, _page2, _footerLine, _footer,
         });
 
-        if (_service is not null)
-        {
-            Controls.Add(_service);
-        }
-
+        _footer.Controls.AddRange(new Control[] { _primary, _secondary });
         ScaleForDpi();
 
-        _browse.Click += (_, _) =>
-        {
-            if (_busy)
-            {
-                return;
-            }
+        _browse.Click += (_, _) => BrowseDir();
+        _primary.Click += Primary_Click;
+        _secondary.Click += (_, _) => CancelOrClose();
 
-            using var dialog = new FolderBrowserDialog
+        AcceptButton = _primary;
+        CancelButton = _secondary;
+    }
+
+    protected override void OnShown(EventArgs e)
+    {
+        base.OnShown(e);
+
+        _dir.SelectionLength = 0;
+        _primary.Focus();
+    }
+
+    // ---------------- 界面搭建（坐标按 96 DPI 写） ----------------
+
+    private void BuildHeader(ExistingInstall? existing)
+    {
+        _title.Text = _windowTitle;
+        _title.Font = new Font("Microsoft YaHei UI", 15F, FontStyle.Bold);
+        _title.ForeColor = Palette.TextPrimary;
+        _title.BackColor = Palette.Card;
+        _title.AutoSize = true;
+        _title.Location = new Point(Pad, 26);
+
+        _subtitle.Text = BuildSubtitle(existing);
+        _subtitle.ForeColor = Palette.TextSecondary;
+        _subtitle.BackColor = Palette.Card;
+        _subtitle.AutoSize = true;
+        _subtitle.MaximumSize = new Size(ContentWidth - 90, 0);
+        _subtitle.Location = new Point(Pad, 60);
+
+        _art.Location = new Point(WindowWidth - Pad - 64, 24);
+        _art.Size = new Size(64, 64);
+        _art.BackColor = Palette.Card;
+
+        try
+        {
+            Icon? appIcon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+
+            if (appIcon is not null)
             {
-                SelectedPath = SafeStartingDir(_dir.Text),
-                Description = $"选择 {_productName} 的安装位置",
-                UseDescriptionForTitle = true,
+                Icon = appIcon;
+            }
+        }
+        catch
+        {
+            // 图标读不到就不显示，不影响安装
+        }
+    }
+
+    private string BuildSubtitle(ExistingInstall? existing)
+    {
+        if (_isUpdate && existing is not null)
+        {
+            string current = string.IsNullOrWhiteSpace(existing.Version)
+                ? string.Empty
+                : $"（当前 {existing.Version}）";
+
+            return $"已安装 {_productName}{current}，将更新到 {Application.ProductVersion}。";
+        }
+
+        return _hasService
+            ? "选择安装位置后点击「下一步」，可安装桌面快捷方式和后台服务。"
+            : $"选择 {_productName} 的安装位置，然后点击「下一步」。";
+    }
+
+    private void BuildPage1(InstallOptions defaults, ExistingInstall? existing)
+    {
+        _page1.Location = new Point(0, HeaderHeight);
+        _page1.Size = new Size(WindowWidth, FooterTop - HeaderHeight);
+        _page1.BackColor = Palette.Card;
+
+        _dirLabel.Text = "安装位置";
+        _dirLabel.ForeColor = Palette.TextSecondary;
+        _dirLabel.BackColor = Palette.Card;
+        _dirLabel.AutoSize = true;
+        _dirLabel.Location = new Point(Pad, 14);
+
+        _dir.Text = _isUpdate ? existing!.InstallDir : defaults.InstallDir;
+        _dir.Font = new Font("Microsoft YaHei UI", 9.5F);
+        _dir.BackColor = Palette.Card;
+        _dir.ForeColor = Palette.TextPrimary;
+        _dir.BorderStyle = BorderStyle.FixedSingle;
+        _dir.ReadOnly = _isUpdate;
+        _dir.Location = new Point(Pad, 38);
+        _dir.Size = new Size(ContentWidth - 114, 28);
+
+        _browse.Text = "浏览…";
+        _browse.Filled = false;
+        _browse.Font = new Font("Microsoft YaHei UI", 9F);
+        _browse.BackColor = Palette.Card;
+        _browse.Location = new Point(WindowWidth - Pad - 104, 36);
+        _browse.Size = new Size(104, 32);
+        _browse.Enabled = !_isUpdate;
+
+        _hint.Text = _isUpdate
+            ? "更新会保留原有安装位置。"
+            : $"会自动创建「{ProductInfo.Current.InstallFolderName}」子目录。";
+        _hint.Font = new Font("Microsoft YaHei UI", 8.25F);
+        _hint.ForeColor = Palette.TextSecondary;
+        _hint.BackColor = Palette.Card;
+        _hint.AutoSize = true;
+        _hint.Location = new Point(Pad, 74);
+
+        _optionsLabel.Text = "选项";
+        _optionsLabel.ForeColor = Palette.TextSecondary;
+        _optionsLabel.BackColor = Palette.Card;
+        _optionsLabel.AutoSize = true;
+        _optionsLabel.Location = new Point(Pad, 118);
+
+        _desktop.Text = "创建桌面快捷方式";
+        _desktop.Checked = defaults.CreateDesktopShortcut;
+        _desktop.ForeColor = Palette.TextPrimary;
+        _desktop.BackColor = Palette.Card;
+        _desktop.AutoSize = true;
+        _desktop.Location = new Point(Pad, 142);
+
+        _launch.Text = _hasService
+            ? "安装完成后打开设置界面"
+            : $"安装完成后立即打开 {_productName}";
+        _launch.Checked = defaults.LaunchAfterInstall;
+        _launch.ForeColor = Palette.TextPrimary;
+        _launch.BackColor = Palette.Card;
+        _launch.AutoSize = true;
+        _launch.Location = new Point(Pad, 170);
+
+        _page1.Controls.AddRange(new Control[] { _dirLabel, _dir, _browse, _hint, _optionsLabel, _desktop, _launch });
+
+        if (_hasService)
+        {
+            var service = new CheckBox
+            {
+                Text = "注册开机自启后台服务（需管理员授权）",
+                Checked = defaults.RegisterService,
+                ForeColor = Palette.TextPrimary,
+                BackColor = Palette.Card,
+                AutoSize = true,
+                Location = new Point(Pad, 198),
             };
 
-            if (dialog.ShowDialog(this) == DialogResult.OK)
-            {
-                // 选的是父目录（比如 G:\dow）就自动补成 G:\dow\Artk Server，装完不跟别的东西混在一起
-                _dir.Text = InstallOptions.NormalizeProductDir(dialog.SelectedPath);
-            }
-        };
+            _service = service;
+            _page1.Controls.Add(service);
+        }
+    }
 
-        _resetDefault.Click += (_, _) =>
-        {
-            if (!_busy)
-            {
-                _dir.Text = InstallOptions.DefaultInstallDir();
-            }
-        };
+    private void BuildPage2()
+    {
+        _page2.Location = new Point(0, HeaderHeight);
+        _page2.Size = new Size(WindowWidth, FooterTop - HeaderHeight);
+        _page2.BackColor = Palette.Card;
+        _page2.Visible = false;
 
-        _install.Click += Install_Click;
-        _cancel.Click += (_, _) => CancelOrClose();
-        _done.Click += Done_Click;
+        _status.Text = "正在准备…";
+        _status.ForeColor = Palette.TextSecondary;
+        _status.BackColor = Palette.Card;
+        _status.AutoSize = false;
+        _status.TextAlign = ContentAlignment.MiddleLeft;
+        _status.Location = new Point(Pad, 14);
+        _status.Size = new Size(ContentWidth - 90, 20);
+
+        _percent.Text = "0%";
+        _percent.ForeColor = Palette.TextSecondary;
+        _percent.BackColor = Palette.Card;
+        _percent.AutoSize = false;
+        _percent.TextAlign = ContentAlignment.MiddleRight;
+        _percent.Location = new Point(WindowWidth - Pad - 90, 14);
+        _percent.Size = new Size(90, 20);
+
+        _bar.Location = new Point(Pad, 42);
+        _bar.Size = new Size(ContentWidth, 8);
+
+        _log.Multiline = true;
+        _log.ReadOnly = true;
+        _log.ScrollBars = ScrollBars.Vertical;
+        _log.WordWrap = false;
+        _log.BorderStyle = BorderStyle.FixedSingle;
+        _log.BackColor = Palette.Card;
+        _log.ForeColor = Palette.TextPrimary;
+        _log.Font = new Font("Consolas", 9F);
+        _log.TabStop = false;
+        _log.Location = new Point(Pad, 62);
+        _log.Size = new Size(ContentWidth, 242);
+
+        _page2.Controls.AddRange(new Control[] { _status, _percent, _bar, _log });
+    }
+
+    private void BuildFooter()
+    {
+        _footerLine.Location = new Point(0, FooterTop);
+        _footerLine.Size = new Size(WindowWidth, 1);
+        _footerLine.BackColor = Palette.Border;
+
+        _footer.Location = new Point(0, FooterTop + 1);
+        _footer.Size = new Size(WindowWidth, WindowHeight - FooterTop - 1);
+        _footer.BackColor = FooterBack;
+
+        _primary.Text = "下一步";
+        _primary.Filled = true;
+        _primary.Font = new Font("Microsoft YaHei UI", 9F);
+        _primary.BackColor = FooterBack;
+        _primary.Location = new Point(WindowWidth - Pad - PrimaryWidth, 16);
+        _primary.Size = new Size(PrimaryWidth, ButtonHeight);
+
+        _secondary.Text = "取消";
+        _secondary.Filled = false;
+        _secondary.Font = new Font("Microsoft YaHei UI", 9F);
+        _secondary.BackColor = FooterBack;
+        _secondary.Location = new Point(
+            WindowWidth - Pad - PrimaryWidth - 10 - SecondaryWidth, 16);
+        _secondary.Size = new Size(SecondaryWidth, ButtonHeight);
     }
 
     /// <summary>
-    /// 按系统 DPI 放大界面。坐标都是按 96 DPI 写死的，而文字会跟着系统 DPI 变大，
-    /// 控件不跟着放大，高分屏（125% / 150%）上标签就只露得出一半；
-    /// WinForms 自带的自动缩放对这种纯代码创建的窗口不生效，只能自己算。
+    /// 按系统 DPI 放大坐标。坐标都是按 96 DPI 写死的；字体的磅值会随 DPI 自动变大，
+    /// 所以只放大位置和尺寸就够了（嵌套页面里的控件一起递归处理）。
     /// </summary>
     private void ScaleForDpi()
     {
@@ -241,27 +330,56 @@ internal sealed class InstallForm : Form
             (int)Math.Round(ClientSize.Width * scale),
             (int)Math.Round(ClientSize.Height * scale));
 
-        foreach (Control control in Controls)
+        ScaleLayout(this, scale);
+    }
+
+    private static void ScaleLayout(Control parent, float scale)
+    {
+        foreach (Control control in parent.Controls)
         {
             control.Location = new Point(
                 (int)Math.Round(control.Left * scale),
                 (int)Math.Round(control.Top * scale));
 
-            // 自动尺寸的标签 / 勾选框已经按字体量过高度了，别再改
-            if (!control.AutoSize)
+            // 标签 / 勾选框是自动尺寸的，已经按字体量过；文本框（包括 AutoSize 默认为 true 的多行框）要手动缩放
+            if (control is not Label && control is not CheckBox)
             {
                 control.Size = new Size(
                     (int)Math.Round(control.Width * scale),
                     (int)Math.Round(control.Height * scale));
             }
 
-            // 折行宽度也要跟着放大，不然窗口变宽了文字还在窄处折行
             if (control.MaximumSize.Width > 0)
             {
                 control.MaximumSize = new Size(
                     (int)Math.Round(control.MaximumSize.Width * scale),
                     control.MaximumSize.Height > 0 ? (int)Math.Round(control.MaximumSize.Height * scale) : 0);
             }
+
+            ScaleLayout(control, scale);
+        }
+    }
+
+    // ---------------- 交互 ----------------
+
+    private void BrowseDir()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        using var dialog = new FolderBrowserDialog
+        {
+            SelectedPath = SafeStartingDir(_dir.Text),
+            Description = $"选择 {_productName} 的安装位置",
+            UseDescriptionForTitle = true,
+        };
+
+        if (dialog.ShowDialog(this) == DialogResult.OK)
+        {
+            // 选的是父目录（比如 G:\dow）就自动补成 G:\dow\Artk Tools，装完不跟别的东西混在一起
+            _dir.Text = InstallOptions.NormalizeProductDir(dialog.SelectedPath);
         }
     }
 
@@ -282,12 +400,30 @@ internal sealed class InstallForm : Form
         return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
     }
 
+    private async void Primary_Click(object? sender, EventArgs e)
+    {
+        if (_page1.Visible)
+        {
+            await StartInstallAsync();
+            return;
+        }
+
+        if (_finished)
+        {
+            Done();
+            return;
+        }
+
+        // 安装失败时按钮是「关闭」
+        Close();
+    }
+
     private void CancelOrClose()
     {
         if (_busy)
         {
             _status.Text = "正在取消…";
-            _cancel.Enabled = false;
+            _secondary.Enabled = false;
 
             try
             {
@@ -304,9 +440,9 @@ internal sealed class InstallForm : Form
         Close();
     }
 
-    private CancellationTokenSource? _cts;
+    // ---------------- 安装 ----------------
 
-    private async void Install_Click(object? sender, EventArgs e)
+    private async Task StartInstallAsync()
     {
         if (_busy)
         {
@@ -314,9 +450,11 @@ internal sealed class InstallForm : Form
         }
 
         string dir = _dir.Text.Trim();
+
         if (dir.Length == 0)
         {
-            MessageBox.Show(this, "请填写安装位置。", _productName + " 安装", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(this, "请填写安装位置。", _productName + " 安装",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
@@ -326,21 +464,16 @@ internal sealed class InstallForm : Form
         }
         catch
         {
-            MessageBox.Show(this, "安装位置无效，请重新选择。", _productName + " 安装", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(this, "安装位置无效，请重新选择。", _productName + " 安装",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
-        // 手输 G:\dow 这类父目录的，也补成 G:\dow\Artk Server；界面上直接把最终位置显示出来
+        // 手输 G:\dow 这类父目录的，也补成 G:\dow\Artk Tools
         dir = InstallOptions.NormalizeProductDir(dir);
         _dir.Text = dir;
 
-        SetBusy(true);
-
-        _cts?.Dispose();
-        _cts = new CancellationTokenSource();
-        CancellationToken token = _cts.Token;
-
-        _options = new InstallOptions
+        var options = new InstallOptions
         {
             InstallDir = dir,
             CreateDesktopShortcut = _desktop.Checked,
@@ -348,21 +481,69 @@ internal sealed class InstallForm : Form
             RegisterService = _service?.Checked ?? false,
         };
 
-        var progress = new Progress<string>(s =>
+        _options = options;
+
+        _page1.Visible = false;
+        _page2.Visible = true;
+        _title.Text = _isUpdate ? $"正在更新 {_productName}" : $"正在安装 {_productName}";
+        _subtitle.Text = "安装过程会自动完成，请稍候。";
+        _status.Text = _isUpdate ? "正在更新…" : "正在安装…";
+        _bar.Value = 0;
+        _percent.Text = "0%";
+        _log.Text = string.Empty;
+
+        _primary.Text = "安装中…";
+        _primary.Enabled = false;
+        _secondary.Text = "取消";
+        _secondary.Enabled = true;
+        _secondary.Visible = true;
+        AcceptButton = null;
+
+        AppendLog(_isUpdate ? "开始更新…" : "开始安装…");
+        SetBusy(true);
+
+        _cts?.Dispose();
+        _cts = new CancellationTokenSource();
+        CancellationToken token = _cts.Token;
+
+        // 三个阶段：步骤文案、百分比、Velopack 的原始输出
+        var status = new Progress<string>(text =>
         {
-            if (!IsDisposed)
+            if (IsDisposed)
             {
-                _status.Text = s;
+                return;
             }
+
+            _status.Text = text;
+            AppendLog(text);
         });
 
-        int code = await Task.Run(() => SetupEngine.Run(_options, s => ((IProgress<string>)progress).Report(s), token));
+        var detail = new Progress<string>(AppendLog);
+
+        var progress = new Progress<int>(value =>
+        {
+            if (IsDisposed)
+            {
+                return;
+            }
+
+            _bar.Value = value;
+            _percent.Text = value + "%";
+        });
+
+        int code = await Task.Run(() => SetupEngine.Run(
+            options,
+            text => ((IProgress<string>)status).Report(text),
+            progress,
+            text => ((IProgress<string>)detail).Report(text),
+            token));
 
         SetBusy(false);
 
         if (token.IsCancellationRequested || code == 2)
         {
             ExitCode = 2;
+
             if (!IsDisposed)
             {
                 Close();
@@ -379,57 +560,48 @@ internal sealed class InstallForm : Form
         }
 
         ExitCode = code;
-        MessageBox.Show(this, "安装没有成功，请根据上方提示处理后重试。", _productName + " 安装",
-            MessageBoxButtons.OK, MessageBoxIcon.Error);
+        _bar.Value = 0;
+        _title.Text = "安装没有成功";
+        _subtitle.Text = "请查看日志，处理后可关闭窗口重新安装。";
+        _status.Text = "安装失败。";
+        _primary.Text = "关闭";
+        _primary.Visible = true;
+        _primary.Enabled = true;
+        AcceptButton = _primary;
+        _secondary.Visible = false;
     }
 
-    /// <summary>安装成功后的完成页：先点「确定」才创建桌面快捷方式 / 注册服务 / 打开程序。</summary>
+    /// <summary>安装成功：进度走满，按钮换成「完成」，点它才执行收尾（快捷方式 / 服务 / 启动）。</summary>
     private void ShowDone()
     {
-        _titleLabel.Text = _isUpdate ? "更新完成" : "安装完成";
-        _subLabel.Text = _isUpdate
+        _finished = true;
+
+        _bar.Value = 100;
+        _percent.Text = "100%";
+        _title.Text = _isUpdate ? "更新完成" : "安装完成";
+        _subtitle.Text = _isUpdate
             ? $"{_productName} 已更新到 {Application.ProductVersion}。"
             : $"{_productName} 已安装到 {_dir.Text}。";
+        _status.Text = "点击「完成」关闭窗口。";
+        AppendLog(_isUpdate ? "更新完成。" : "安装完成。");
 
-        _subLabel.Text += Environment.NewLine + "点击「确定」执行后续操作并关闭安装程序。";
-
-        _dirLabel.Visible = false;
-        _dir.Visible = false;
-        _browse.Visible = false;
-        _resetDefault.Visible = false;
-        _desktop.Visible = false;
-        _launch.Visible = false;
-        if (_service is not null)
-        {
-            _service.Visible = false;
-        }
-
-        _bar.Visible = false;
-        _install.Visible = false;
-        _cancel.Visible = false;
-        _status.Text = string.Empty;
-
-        _done.Visible = true;
-        AcceptButton = _done;
-        CancelButton = null;
-        _done.Focus();
+        _primary.Text = "完成";
+        _primary.Visible = true;
+        _primary.Enabled = true;
+        _secondary.Visible = false;
+        AcceptButton = _primary;
+        _primary.Focus();
     }
 
-    private void Done_Click(object? sender, EventArgs e)
+    private void Done()
     {
-        _done.Enabled = false;
+        _primary.Enabled = false;
 
         if (_options is { } options)
         {
             try
             {
-                SetupEngine.ApplyPostInstall(options, s =>
-                {
-                    if (!IsDisposed)
-                    {
-                        _status.Text = s;
-                    }
-                });
+                SetupEngine.ApplyPostInstall(options, AppendLog);
             }
             catch
             {
@@ -440,20 +612,30 @@ internal sealed class InstallForm : Form
         Close();
     }
 
+    private void AppendLog(string line)
+    {
+        if (IsDisposed || line.Length == 0)
+        {
+            return;
+        }
+
+        _log.AppendText($"[{DateTime.Now:HH:mm:ss}] {line}{Environment.NewLine}");
+        _log.SelectionStart = _log.TextLength;
+        _log.ScrollToCaret();
+    }
+
     private void SetBusy(bool busy)
     {
         _busy = busy;
         _dir.Enabled = !busy;
+        _browse.Enabled = !busy && !_isUpdate;
         _desktop.Enabled = !busy;
         _launch.Enabled = !busy;
+
         if (_service is not null)
         {
             _service.Enabled = !busy;
         }
-
-        _install.Enabled = !busy;
-        _cancel.Enabled = true;
-        _bar.Visible = busy;
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e)

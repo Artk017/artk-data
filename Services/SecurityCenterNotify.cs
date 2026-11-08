@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Win32;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>
 /// 「防火墙通知」开关：控制 Windows 安全中心服务（wscsvc）的启动类型。

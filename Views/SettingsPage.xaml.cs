@@ -1,13 +1,13 @@
 using System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using WinUIDemo.Services;
+using ArtkTools.Services;
 
-namespace WinUIDemo.Views;
+namespace ArtkTools.Views;
 
 public sealed partial class SettingsPage : Page
 {
-    private static readonly string[] Sections = { "windows", "clean", "software", "game", "safe", "phone" };
+    private static readonly string[] Sections = { "windows", "clean", "software", "game", "safe", "tools", "phone" };
 
     private bool _loading = true;
 
@@ -170,7 +170,7 @@ public sealed partial class SettingsPage : Page
             XamlRoot = XamlRoot,
             Title = "卸载 Artk Tools",
             Content = "确定要卸载 Artk Tools 吗？程序会立即关闭，并从本机移除安装文件、开始菜单 / 桌面快捷方式，"
-                    + "同时删除 %LOCALAPPDATA%\\Nova 里的设置、清单缓存与下载记录（已下载的安装包本身不会被删除）。",
+                    + "随后卸载程序会询问是否删除 %LOCALAPPDATA%\\Nova 里的设置、清单缓存与下载记录（已下载的安装包本身不会被删除）。",
             PrimaryButtonText = "卸载",
             CloseButtonText = "取消",
             DefaultButton = ContentDialogButton.Close,
@@ -187,10 +187,13 @@ public sealed partial class SettingsPage : Page
             return;
         }
 
-        // 退出后删除 Nova 自己的数据目录（设置 / 缓存 / 下载记录）
-        AppUninstaller.ScheduleDataCleanup();
+        // Inno 的卸载器会弹窗询问是否删除用户数据；老 Velopack 版本由这里自己清理。
+        if (!AppUninstaller.DataCleanupHandledByUninstaller)
+        {
+            AppUninstaller.ScheduleDataCleanup();
+        }
 
-        // Update.exe --uninstall 已拉起，立刻退出自身，让它在文件解锁后删除安装目录。
+        // 卸载器已拉起，立刻退出自身，让它在文件解锁后删除安装目录。
         Environment.Exit(0);
     }
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>
 /// 本地组策略存储（<c>%windir%\System32\GroupPolicy\Machine\Registry.pol</c>）。

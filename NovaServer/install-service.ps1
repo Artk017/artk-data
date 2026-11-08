@@ -1,4 +1,4 @@
-﻿﻿# Artk Server —— 装成 Windows 服务（计划任务方式，不需要额外组件）
+﻿# Artk Server —— 装成 Windows 服务（计划任务方式，不需要额外组件）
 # 用法：
 #   右键「以管理员身份运行 PowerShell」，然后
 #   powershell -ExecutionPolicy Bypass -File install-service.ps1

@@ -3,18 +3,47 @@ using System.Diagnostics;
 using System.IO;
 using Velopack.Locators;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>
-/// 卸载自身：调用 Velopack 生成的 Update.exe --uninstall。
-/// 只有通过安装包（Setup）安装的版本才有 Update.exe；便携版 / 开发直跑则不可自动卸载。
+/// 卸载自身：Inno Setup 安装的版本调用 unins000.exe（卸载器自己会问是否删除用户数据）；
+/// 老的 Velopack 安装版本调用 Update.exe --uninstall。
+/// 便携版 / 开发直跑则不可自动卸载。
 /// </summary>
 public static class AppUninstaller
 {
+    /// <summary>上次卸载是否由安装器接管了用户数据清理（Inno 的卸载器会弹窗询问）。</summary>
+    public static bool DataCleanupHandledByUninstaller { get; private set; }
+
+    /// <summary>Inno Setup 的卸载器（unins000.exe 等）；不是 Inno 安装时为 null。</summary>
+    private static string? FindInnoUninstaller()
+    {
+        try
+        {
+            string dir = AppContext.BaseDirectory;
+
+            if (!Directory.Exists(dir))
+            {
+                return null;
+            }
+
+            return Directory.GetFiles(dir, "unins*.exe", SearchOption.TopDirectoryOnly).FirstOrDefault();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     /// <summary>是否具备自动卸载条件；不具备时用 <paramref name="reason"/> 说明原因。</summary>
     public static bool CanUninstall(out string reason)
     {
         reason = string.Empty;
+
+        if (FindInnoUninstaller() is not null)
+        {
+            return true;
+        }
 
         try
         {
@@ -47,12 +76,34 @@ public static class AppUninstaller
     }
 
     /// <summary>
-    /// 拉起 Update.exe --uninstall 开始卸载。成功后调用方应立即退出本进程，
-    /// 让 Update.exe 在文件解锁后再删除安装目录并清理快捷方式。
+    /// 拉起卸载器开始卸载（Inno 的 unins000.exe / 老版本的 Update.exe --uninstall）。
+    /// 成功后调用方应立即退出本进程，让卸载器在文件解锁后再删除安装目录并清理快捷方式。
     /// </summary>
     public static bool TryUninstall(out string error)
     {
         error = string.Empty;
+        DataCleanupHandledByUninstaller = false;
+
+        // Inno Setup 安装：卸载器自己会弹窗询问是否删除用户数据
+        if (FindInnoUninstaller() is { } inno)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo(inno)
+                {
+                    UseShellExecute = true,
+                    WorkingDirectory = Path.GetDirectoryName(inno),
+                });
+
+                DataCleanupHandledByUninstaller = true;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                error = ex.Message;
+                return false;
+            }
+        }
 
         if (!CanUninstall(out error))
         {

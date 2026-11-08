@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>
 /// 当前显示器的刷新率。枚举走 EnumDisplaySettings，切换走 ChangeDisplaySettingsEx，

@@ -9,7 +9,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace WinUIDemo.Services;
+namespace ArtkTools.Services;
 
 /// <summary>
 /// 应用 .reg 配置：从清单服务器下载并 reg.exe 导入。服务器端每个软件可有多个 .reg：

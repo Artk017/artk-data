@@ -1,61 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <UserControl
-    x:Class="WinUIDemo.Views.SystemInfoView"
+    x:Class="ArtkTools.Views.SystemInfoView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <StackPanel Padding="20,6,20,18" Spacing="11">
-        <Grid ColumnSpacing="14">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="86" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="设备名称" Style="{StaticResource MetaStyle}" VerticalAlignment="Center" />
-            <TextBlock x:Name="DeviceNameText" Grid.Column="1" FontSize="12.5"
-                       TextWrapping="Wrap" IsTextSelectionEnabled="True" />
-        </Grid>
+    <!-- 横向信息条：每项上面是标签，下面是值，值过长自动换行（最多两行） -->
+    <Grid Padding="20,14,20,16" ColumnSpacing="24">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*" />
+            <ColumnDefinition Width="1.45*" />
+            <ColumnDefinition Width="0.65*" />
+            <ColumnDefinition Width="1.15*" />
+            <ColumnDefinition Width="0.9*" />
+        </Grid.ColumnDefinitions>
 
-        <Grid ColumnSpacing="14">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="86" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="处理器" Style="{StaticResource MetaStyle}" VerticalAlignment="Top"
-                       Margin="0,2,0,0" />
-            <TextBlock x:Name="ProcessorText" Grid.Column="1" FontSize="12.5"
-                       TextWrapping="Wrap" IsTextSelectionEnabled="True" />
-        </Grid>
+        <StackPanel Spacing="3">
+            <TextBlock Text="设备名称" Style="{StaticResource MetaStyle}" />
+            <TextBlock x:Name="DeviceNameText" FontSize="13" FontWeight="SemiBold"
+                       TextWrapping="Wrap"
+                       IsTextSelectionEnabled="True" />
+        </StackPanel>
 
-        <Grid ColumnSpacing="14">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="86" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="内存大小" Style="{StaticResource MetaStyle}" VerticalAlignment="Center" />
-            <TextBlock x:Name="MemoryText" Grid.Column="1" FontSize="12.5"
-                       TextWrapping="Wrap" IsTextSelectionEnabled="True" />
-        </Grid>
+        <StackPanel Grid.Column="1" Spacing="3">
+            <TextBlock Text="处理器" Style="{StaticResource MetaStyle}" />
+            <TextBlock x:Name="ProcessorText" FontSize="13" FontWeight="SemiBold"
+                       TextWrapping="Wrap"
+                       IsTextSelectionEnabled="True" />
+        </StackPanel>
 
-        <Grid ColumnSpacing="14">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="86" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="显卡" Style="{StaticResource MetaStyle}" VerticalAlignment="Top"
-                       Margin="0,2,0,0" />
-            <TextBlock x:Name="GraphicsText" Grid.Column="1" FontSize="12.5"
-                       TextWrapping="Wrap" IsTextSelectionEnabled="True" />
-        </Grid>
+        <StackPanel Grid.Column="2" Spacing="3">
+            <TextBlock Text="内存" Style="{StaticResource MetaStyle}" />
+            <TextBlock x:Name="MemoryText" FontSize="13" FontWeight="SemiBold"
+                       TextWrapping="Wrap"
+                       IsTextSelectionEnabled="True" />
+        </StackPanel>
 
-        <Grid ColumnSpacing="14">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="86" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="操作系统" Style="{StaticResource MetaStyle}" VerticalAlignment="Top"
-                       Margin="0,2,0,0" />
-            <TextBlock x:Name="OsText" Grid.Column="1" FontSize="12.5"
-                       TextWrapping="Wrap" IsTextSelectionEnabled="True" />
-        </Grid>
-    </StackPanel>
+        <StackPanel Grid.Column="3" Spacing="3">
+            <TextBlock Text="显卡" Style="{StaticResource MetaStyle}" />
+            <TextBlock x:Name="GraphicsText" FontSize="13" FontWeight="SemiBold"
+                       TextWrapping="Wrap"
+                       IsTextSelectionEnabled="True" />
+        </StackPanel>
+
+        <StackPanel Grid.Column="4" Spacing="3">
+            <TextBlock Text="操作系统" Style="{StaticResource MetaStyle}" />
+            <TextBlock x:Name="OsText" FontSize="13" FontWeight="SemiBold"
+                       TextWrapping="Wrap"
+                       IsTextSelectionEnabled="True" />
+        </StackPanel>
+    </Grid>
 </UserControl>
