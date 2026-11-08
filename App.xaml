@@ -125,6 +125,16 @@
                 <Setter Property="BorderThickness" Value="1" />
             </Style>
 
+            <!-- 子页面左上角的返回按钮：浅底胶囊 + 品牌色箭头底座 -->
+            <Style x:Key="BackPillButtonStyle" TargetType="Button">
+                <Setter Property="HorizontalAlignment" Value="Left" />
+                <Setter Property="Padding" Value="5,4,11,4" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+            </Style>
+
             <!-- Small pill / badge -->
             <Style x:Key="BadgeStyle" TargetType="Border">
                 <Setter Property="CornerRadius" Value="6" />
