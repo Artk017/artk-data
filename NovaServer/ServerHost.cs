@@ -934,6 +934,9 @@ internal sealed class ServerHost
         // 界面用的读写接口（/api/settings）
         SettingsApi.Map(app, config, _configPath, store, publisher, _store.FilePath, KeyOk, Denied);
 
+        // 垃圾清理页保存的勾选（/api/cleaner-settings）
+        CleanerSettingsApi.Map(app, config, _store.FilePath, KeyOk, Denied);
+
         // ── 发布到 GitHub（清单改动 → Release 资产） ────────────────────────
         app.MapGet("/api/publish", (HttpContext ctx) =>
         {
@@ -970,7 +973,7 @@ internal sealed class ServerHost
         Console.WriteLine($"  密钥:    {(string.IsNullOrWhiteSpace(_config.ApiKey) ? "未设置（写接口不校验）" : _config.ApiKey)}");
         Console.WriteLine($"  发布:    {(_config.AutoPublish ? (_publisher.Enabled ? "开 · 清单改动后自动传 GitHub" : "开但缺 token，已跳过") : "关（server.json 里 autoPublish / publishToken）")}");
         Console.WriteLine("  界面:    用 Artk Server.exe（不带参数）打开设置界面");
-        Console.WriteLine("  接口:    /api/health  /api/catalog  /api/regs  /api/publish  /api/settings");
+        Console.WriteLine("  接口:    /api/health  /api/catalog  /api/regs  /api/cleaner-settings  /api/publish  /api/settings");
         Console.WriteLine("========================================================");
         Console.WriteLine();
     }
