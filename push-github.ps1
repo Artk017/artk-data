@@ -48,6 +48,21 @@ function FindGit {
     throw "没有找到 git.exe，请先安装 Git for Windows（winget install Git.Git）。"
 }
 
+# 远端仓库里有、但本项目目录没有的文件（例如 artk-tools 数据），
+# 标记为 skip-worktree，避免它们一直显示为“本地删除”并阻塞 rebase。
+function Hide-DeletedPaths {
+    $status = & $script:Git -c core.quotePath=false -C $Source status --porcelain
+    foreach ($line in $status) {
+        if ($line.Length -lt 4) { continue }
+
+        $code = $line.Substring(0, 2)
+        if (-not $code.Contains('D')) { continue }
+
+        $path = $line.Substring(3)
+        & $script:Git -C $Source update-index --skip-worktree -- $path 2>$null | Out-Null
+    }
+}
+
 try {
     $script:Git = FindGit
 
@@ -92,6 +107,8 @@ try {
     & $script:Git -C $Source fetch origin $Branch
     if ($LASTEXITCODE -ne 0) { throw "无法访问远端仓库，请检查网络或 GitHub 凭据。" }
 
+    Hide-DeletedPaths
+
     # 没有本地改动且落后远端时，直接把 HEAD/索引对齐到远端，不检出远端文件
     $dirty = (& $script:Git -c core.quotePath=false -C $Source status --porcelain)
     $behind = [int](& $script:Git -C $Source rev-list --count "HEAD..origin/$Branch")
@@ -102,6 +119,8 @@ try {
 
         & $script:Git -C $Source read-tree "origin/$Branch"
         if ($LASTEXITCODE -ne 0) { throw "对齐远端索引失败。" }
+
+        Hide-DeletedPaths
     }
 
     # ---------------- 找出变化的文件 ----------------
