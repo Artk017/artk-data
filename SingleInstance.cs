@@ -1,6 +1,6 @@
 using System.IO.Pipes;
 
-namespace WinUIDemo;
+namespace ArtkTools;
 
 /// <summary>
 /// 单实例：第一个进程占住互斥量并监听一条命名管道；

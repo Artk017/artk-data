@@ -1,22 +1,25 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.UI;
+using Microsoft.UI.Composition;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
-using WinUIDemo.Helpers;
-using WinUIDemo.Services;
-using WinUIDemo.Views;
+using ArtkTools.Helpers;
+using ArtkTools.Services;
+using ArtkTools.Views;
 using Windows.Graphics;
 using Windows.UI;
 
-namespace WinUIDemo;
+namespace ArtkTools;
 
 public sealed partial class MainWindow : Window
 {
@@ -57,6 +60,12 @@ public sealed partial class MainWindow : Window
     /// <summary>用户已确认带着未完成的下载退出，放行最后一次关闭。</summary>
     private bool _closeConfirmed;
 
+    /// <summary>已经进入退出流程，重复点 X 直接吞掉。</summary>
+    private bool _closingStarted;
+
+    /// <summary>收尾已经做完，此时我们自己调的 Close() 不再拦截。</summary>
+    private bool _teardownDone;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -95,14 +104,15 @@ public sealed partial class MainWindow : Window
 
         Closed += (_, _) =>
         {
-            // 关掉主窗口就彻底退出：先收掉所有弹窗，否则它们会把进程吊着
-            _trayIcon?.Dispose();
-            _trayIcon = null;
-            ToolWindow.CloseAll();
-            AddSoftwareWindow.CloseAll();
-
-            // 手机工具相关的都收掉：adb / fastboot 命令进程 + 常驻的 adb server
-            PhoneTools.Shutdown();
+            // 正常退出时收尾已经在 CloseSequenceAsync 里做完了，这里只做兜底
+            // （比如系统关机直接销毁窗口）：关掉托盘和弹窗，否则它们会把进程吊着
+            if (!_teardownDone)
+            {
+                _trayIcon?.Dispose();
+                _trayIcon = null;
+                ToolWindow.CloseAll();
+                AddSoftwareWindow.CloseAll();
+            }
 
             Application.Current.Exit();
         };
@@ -137,38 +147,110 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    /// <summary>关窗前检查是否有正在进行的下载；有就拦下并确认。</summary>
+    /// <summary>
+    /// 关窗前先拦一次：有下载就确认，然后走退出流程。
+    /// 关键点：窗口先播 160ms 退场动画并立刻隐藏，收托盘 / 关弹窗 / 停 adb server
+    /// 这些会卡的活全部放在窗口消失之后，用户看不到任何停顿。
+    /// </summary>
     private async void OnAppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)
     {
-        if (_closeConfirmed)
+        // 收尾做完后我们自己的 Close() 放行
+        if (_teardownDone)
+        {
+            return;
+        }
+
+        // 第一次关闭先拦住，退出流程走完再调 Close()
+        args.Cancel = true;
+
+        if (_closingStarted)
         {
             return;
         }
 
         int active = DownloadTracker.ActiveCount;
-        if (active <= 0)
+        if (!_closeConfirmed && active > 0)
         {
-            return;
-        }
+            var dialog = new ContentDialog
+            {
+                XamlRoot = RootGrid.XamlRoot,
+                Title = "下载尚未完成",
+                Content = $"当前还有 {active} 个安装包正在下载，退出会中断。确定要退出吗？",
+                PrimaryButtonText = "退出并取消下载",
+                CloseButtonText = "继续下载",
+                DefaultButton = ContentDialogButton.Close,
+            };
 
-        // 先拦下这次关闭，等确认后再真正关
-        args.Cancel = true;
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+            {
+                return;
+            }
 
-        var dialog = new ContentDialog
-        {
-            XamlRoot = RootGrid.XamlRoot,
-            Title = "下载尚未完成",
-            Content = $"当前还有 {active} 个安装包正在下载，退出会中断。确定要退出吗？",
-            PrimaryButtonText = "退出并取消下载",
-            CloseButtonText = "继续下载",
-            DefaultButton = ContentDialogButton.Close,
-        };
-
-        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
-        {
             DownloadTracker.CancelAll();
             _closeConfirmed = true;
-            Close();
+        }
+
+        _closingStarted = true;
+        await CloseSequenceAsync();
+    }
+
+    /// <summary>
+    /// 退出顺序：退场动画 → 窗口隐藏 → 窗口之外做收尾 → 真正关闭。
+    /// adb kill-server 最多要等 2 秒，放在窗口隐藏之后跑，不再表现为「点 X 卡一下」。
+    /// </summary>
+    private async Task CloseSequenceAsync()
+    {
+        await PlayCloseAnimationAsync();
+
+        // 动画播完直接把窗口从屏幕上收走（任务栏 / Alt+Tab 里也一起消失）
+        AppWindow.Hide();
+
+        // 下面几步都可能卡：托盘、工具弹窗、添加软件弹窗
+        _trayIcon?.Dispose();
+        _trayIcon = null;
+        ToolWindow.CloseAll();
+        AddSoftwareWindow.CloseAll();
+
+        // 结束 adb / fastboot 子进程并 kill-server，最多等 2 秒，交给线程池
+        await Task.Run(PhoneTools.Shutdown);
+
+        _teardownDone = true;
+        Close();
+    }
+
+    /// <summary>退场动画：淡出并轻微缩小，160ms。</summary>
+    private async Task PlayCloseAnimationAsync()
+    {
+        try
+        {
+            Visual visual = ElementCompositionPreview.GetElementVisual(RootGrid);
+            Compositor compositor = visual.Compositor;
+            var easing = compositor.CreateCubicBezierEasingFunction(
+                new Vector2(0.3f, 0f), new Vector2(0.8f, 0.5f));
+
+            visual.CenterPoint = new Vector3(
+                (float)RootGrid.ActualWidth / 2,
+                (float)RootGrid.ActualHeight / 2,
+                0f);
+
+            var fade = compositor.CreateScalarKeyFrameAnimation();
+            fade.InsertKeyFrame(0f, 1f);
+            fade.InsertKeyFrame(1f, 0f, easing);
+            fade.Duration = TimeSpan.FromMilliseconds(160);
+
+            var scale = compositor.CreateVector3KeyFrameAnimation();
+            scale.InsertKeyFrame(0f, Vector3.One);
+            scale.InsertKeyFrame(1f, new Vector3(0.97f, 0.97f, 1f), easing);
+            scale.Duration = TimeSpan.FromMilliseconds(160);
+
+            visual.StartAnimation("Opacity", fade);
+            visual.StartAnimation("Scale", scale);
+
+            await Task.Delay(170);
+        }
+        catch
+        {
+            // 动画失败也要继续关闭
         }
     }
 
@@ -322,6 +404,7 @@ public sealed partial class MainWindow : Window
             "game" => typeof(GamePage),
             "safe" => typeof(SafePage),
             "phone" => typeof(PhoneToolsPage),
+            "tools" => typeof(ComputerToolsPage),
             "settings" => typeof(SettingsPage),
             _ => typeof(WindowsPage),
         };
@@ -332,5 +415,27 @@ public sealed partial class MainWindow : Window
         }
 
         ContentFrame.Navigate(page);
+    }
+
+    /// <summary>
+    /// 点击已经选中的「电脑工具」时 SelectionChanged 不会触发，
+    /// 这里处理「正在某个工具子页 → 点电脑工具回到卡片页」。
+    /// </summary>
+    private void Nav_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+    {
+        if (args.InvokedItemContainer is not NavigationViewItem item || item.Tag is not string tag || tag != "tools")
+        {
+            return;
+        }
+
+        var current = ContentFrame.CurrentSourcePageType;
+
+        if (current == typeof(RuntimeRepairPage) ||
+            current == typeof(ContextMenuPage) ||
+            current == typeof(DotnetPage) ||
+            current == typeof(DiskHealthPage))
+        {
+            ContentFrame.Navigate(typeof(ComputerToolsPage));
+        }
     }
 }

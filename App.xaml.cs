@@ -2,9 +2,9 @@ using System;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Velopack;
-using WinUIDemo.Services;
+using ArtkTools.Services;
 
-namespace WinUIDemo;
+namespace ArtkTools;
 
 public partial class App : Application
 {
@@ -16,7 +16,7 @@ public partial class App : Application
     public App()
     {
         // Velopack 的安装钩子必须最先处理：安装 / 更新时它会以
-        // WinUIDemo.exe --veloapp-install <版本> 之类的参数把程序拉起来，
+        // ArtkTools.exe --veloapp-install <版本> 之类的参数把程序拉起来，
         // 这里 Run() 把这类参数吃掉、跑完钩子就退出，不会再弹主界面
         // （不处理的话安装过程中会提前出现窗口，装完又被关掉重开）。
         VelopackApp.Build()
@@ -170,6 +170,16 @@ public partial class App : Application
                 }
 
                 return ok ? 0 : 1;
+            }
+            if (string.Equals(commandLine[i], ArtkTools.Services.ComputerTools.DiskHealthService.SmartReportSwitch,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                if (i + 1 < commandLine.Length)
+                {
+                    ArtkTools.Services.ComputerTools.DiskHealthService.WriteSmartReport(commandLine[i + 1]);
+                }
+
+                return 0;
             }
         }
 

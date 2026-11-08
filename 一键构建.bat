@@ -36,6 +36,15 @@ if errorlevel 1 (
     exit /b 1
 )
 
+rem Inno Setup 6 is required for the Artk Tools client installer (installer.iss)
+if not exist "%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe" if not exist "%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe" if not exist "%ProgramFiles%\Inno Setup 6\ISCC.exe" (
+    echo [ERROR] Inno Setup 6 not found. Install it first:
+    echo         winget install JRSoftware.InnoSetup
+    echo.
+    pause
+    exit /b 1
+)
+
 if "%VERSION%"=="" (
     powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0build-installer.ps1"
 ) else (
@@ -51,7 +60,7 @@ if errorlevel 1 (
 echo.
 echo [DONE] Build finished
 echo         Artk Tools installers: dist\release\
-echo         ArtkTools-win-Setup.exe       installer
+echo         ArtkTools-win-Setup.exe       Inno Setup installer
 echo         ArtkTools-win-Portable.zip    portable
 echo         Artk Server installer: dist\release-server\
 echo         ArtkServer-win-Setup.exe      with background-service option

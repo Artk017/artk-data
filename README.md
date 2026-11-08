@@ -19,18 +19,18 @@ WinUI 3 桌面工具箱（原项目名 Nova），六个页面 **Windows / 垃圾
 工程只引用 Windows App SDK 的 **WinUI 分体包**（`Microsoft.WindowsAppSDK.WinUI` + `InteractiveExperiences` + `Runtime`），
 不引用元包，避免把 AI / ML / Search 运行时（onnxruntime、DirectML 等约 50 MB）带进安装包。
 
-> **改名说明（Nova → Artk Tools）**：只改对外显示的名字（窗口标题、设置页「关于」、安装向导、托盘提示、快捷方式、安装包文件名）。
-> 内部标识故意不动，避免更新链和用户数据断掉：Velopack packId 仍是 `NovaWorkbench`、主程序仍是 `WinUIDemo.exe`、
-> 安装向导仍是 `NovaSetup.exe`、数据目录仍是 `%LOCALAPPDATA%\Nova`。
+> **改名说明**：工程名、命名空间与主程序 exe 已统一为 `ArtkTools`（旧版是 `WinUIDemo.exe`，升级安装时会自动清理旧 exe）。
+> 用户数据目录仍是 `%LOCALAPPDATA%\Nova`，升级不会丢设置；服务端 Velopack packId 仍是 `ArtkServer`。
+> 客户端安装包使用 Inno Setup（`installer.iss`），卸载走 Inno 的 `unins000.exe`。
 
 ## 构建与运行
 
 ```powershell
 dotnet build -c Debug -p:Platform=x64
-.\bin\x64\Debug\net10.0-windows10.0.19041.0\win-x64\WinUIDemo.exe
+.\bin\x64\Debug\net10.0-windows10.0.19041.0\win-x64\ArtkTools.exe
 ```
 
-或在 Visual Studio 2026 打开 `WinUIDemo.sln`，平台选 **x64**，F5 启动。
+或在 Visual Studio 2026 打开 `ArtkTools.sln`，平台选 **x64**，F5 启动。
 
 ## 打包成 exe 安装包
 
@@ -38,10 +38,12 @@ dotnet build -c Debug -p:Platform=x64
 
 1. 自包含发布客户端到 `dist\app`（`--self-contained true`、`WindowsAppSDKSelfContained=true`）；
 2. 自包含发布 Artk Server 到 `dist\server`；
-3. `vpk pack` 生成客户端 / 服务端安装包；
-4. `Installer/`、`ServerSetup/` 把自定义安装向导套在 vpk 的 Setup 外面，替换掉原版 Setup；
+3. `ISCC`（Inno Setup 6）按 `installer.iss` 编译客户端安装包，向导风格与 tubatools 一致；
+4. `vpk pack` + `ServerSetup/` 只用于服务端安装包（套自定义向导）；
 5. 版本号自动 +1（记在 `dist\version.txt`，也可用 `-Version` 指定）；
 6. 收尾清理中间产物：`dist\app`、`dist\server`、`dist\setupgen`、`dist\serversetupgen`、`*-old-*` 全部删掉。
+
+> 打包需要额外安装 Inno Setup 6：`winget install JRSoftware.InnoSetup`（或把 `ISCC.exe` 放进 PATH）。
 
 构建完成后 `dist` 里只保留：
 
@@ -51,17 +53,18 @@ dotnet build -c Debug -p:Platform=x64
 | `dist\release-server` | 服务端 `ArtkServer-win-Setup.exe`、`ArtkServer-win-Portable.zip` |
 | `dist\version.txt` | 上次构建版本号，供下次自动递增 |
 
-当前体积参考：客户端 Setup 约 **127 MB**、便携包约 **70 MB**；服务端 Setup 约 **139 MB**。
+当前体积参考：客户端 Setup 约 **45 MB**、便携包约 **66 MB**；服务端 Setup 约 **139 MB**、便携包约 **82 MB**。
 服务端不再额外保留 `dist\server` 文件夹，部署请直接用安装包或便携包解压。
 
-### Artk Tools 安装向导（`Installer/`）
+### Artk Tools 安装包（`installer.iss`，Inno Setup 6）
 
-- 可选**自定义安装路径**、**是否创建桌面快捷方式**、**安装后是否立即打开**；
-  选路径会自动补产品子目录（选 `G:\dow` 就装到 `G:\dow\Artk Tools`）。
-- 已装过时自动读取卸载项进入「更新」模式，路径锁定为原目录，不会装第二份。
-- 安装前会结束正在运行的 Artk Tools、Update.exe 以及常驻的 `adb` / `fastboot`（它们会锁住安装目录）。
-- 支持 `--silent [--installto <目录>] [--no-desktop] [--launch]`；`--print-target` 只打印目标目录。
-- 默认安装到 `%LOCALAPPDATA%\Artk Tools`，注册「应用和功能」卸载项。
+- 和 `_ref\tubatools-master` 同款：Inno Setup 6 modern 向导（纯白底、右下角「上一步 / 下一步 / 取消」）。
+- 流程：目标位置 → 开始菜单文件夹 → 附加任务（桌面快捷方式）→ 准备安装 → 正在安装 → 完成（可勾选运行 Artk Tools）。
+- 安装到 `Program Files\Artk Tools`，需要管理员授权；快捷方式、卸载器、卸载项都由 Inno 生成。
+- 安装 / 升级前 Inno 会自动结束正在运行的旧版本（Restart Manager），不会装出第二份。
+- 卸载时询问是否删除 `%LOCALAPPDATA%\Nova` 的用户数据，默认保留。
+- 中文文案来自 `ChineseSimplified.isl`，页面用语在 `installer.iss` 的 `[Messages]`。
+- 旧的 `Installer/` 工程（`NovaSetup.exe`）不再用于客户端，只作为 `ServerSetup` 的共享源码保留。
 
 ### Artk Server 安装向导（`ServerSetup/`）
 
@@ -86,7 +89,7 @@ Services/
   DownloadRegistry.cs  已下载安装包的持久记录（%LOCALAPPDATA%\Nova\downloads.json）
   DownloadTracker.cs   跟踪进行中的下载，退出前据此提示
   AppInstall.cs        识别是否已安装（扫卸载注册表）+ 静默安装 + 找主程序 exe
-  AppUninstaller.cs    卸载自身（Velopack Update.exe --uninstall）
+  AppUninstaller.cs    卸载自身（Inno 的 unins*.exe；老 Velopack 版本用 Update.exe --uninstall）
   AppLinkResolver.cs   现场解析直链：KOOK 版本接口 / NVIDIA 与奇游抓下载页
   AppLinks.cs          旧版直链工具留下的 links.json 读取（兼容已有用户数据）
   AppAutoFill.cs       旧版添加流程的链接自动识别（已被「添加软件」取代，当前未引用）
@@ -128,8 +131,10 @@ Views/
   ToolWindow           所有弹窗共用的外壳：自绘标题栏 + 图钉置顶 + 记住尺寸
   …                    （ProcessDetailView / SystemSettingsView / SystemInfoView / FileLocationsDialog /
                         PinyinVocabView / CommandConsoleDialog）
+installer.iss          Artk Tools 的 Inno Setup 6 安装脚本（和 tubatools 同款向导）
+ChineseSimplified.isl  Inno 安装向导的中文文案
 NovaServer/            Artk Server：WinUI 设置界面 + Kestrel 清单 API + 数据同步
-Installer/             Artk Tools 安装向导（WinForms），内嵌 vpk Setup
+Installer/             旧的自定义安装向导源码（客户端已改用 Inno，只剩 ServerSetup 复用）
 ServerSetup/           Artk Server 安装向导（WinForms），多后台服务选项
 LinkGrabber/           已停用的旧直链工具工程，不参与构建，可删除
 ```

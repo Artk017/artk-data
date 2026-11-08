@@ -1,4 +1,4 @@
-﻿# 打包安装包（Artk Tools / WinUIDemo）
+﻿# 打包安装包（Artk Tools）
 #
 # 用法：在仓库根目录执行
 #     powershell -ExecutionPolicy Bypass -File build-installer.ps1
@@ -6,13 +6,13 @@
 #     powershell -ExecutionPolicy Bypass -File build-installer.ps1 -Version 1.2.0 -OutDir dist\release-1.2.0
 #
 # 产物（默认 dist\release\）：
-#     ArtkTools-win-Setup.exe     安装器（Artk Tools 安装向导：自定义安装路径 / 是否创建桌面快捷方式 / 安装后立即打开）
+#     ArtkTools-win-Setup.exe     安装器（Inno Setup 向导：目标位置 / 开始菜单 / 附加任务 / 安装 / 完成）
 #     ArtkTools-win-Portable.zip  免安装版
 #
-# 注意：packId 仍是 NovaWorkbench（Velopack 的应用标识），只把对外文件名改成了 ArtkTools，
-#      这样老安装还能正常按「更新」覆盖，不会多出第二个卸载项。
+# Artk Tools 用 Inno Setup 打包（installer.iss，和 tubatools-master 同款向导）；
+# Artk Server 仍用 Velopack + 自定义向导。
 #
-# 依赖：.NET 10 SDK + Velopack CLI（dotnet tool install --global vpk）。
+# 依赖：.NET 10 SDK + Inno Setup 6（winget install JRSoftware.InnoSetup）+ Velopack CLI（dotnet tool install --global vpk）。
 # 说明：应用是 unpackaged WinUI 3，这里做「自包含」发布（.NET 运行时 + Windows App SDK 一起打包），
 #      目标机器不需要另外装运行时；代价是装完约 230 MB。
 #
@@ -21,8 +21,6 @@
 
 param(
     [string]$Version = "",
-    [string]$PackId = "NovaWorkbench",
-    [string]$Title = "Artk Tools",
     # 对外文件名前缀（ArtkTools-win-Setup.exe / ArtkTools-win-Portable.zip）
     [string]$ArtifactName = "ArtkTools",
     [string]$OutDir = "dist\release",
@@ -49,7 +47,9 @@ try {
     }
 
     Write-Host "==> 发布自包含版本（$Version）" -ForegroundColor Cyan
-    dotnet publish WinUIDemo.csproj -c Release -r win-x64 --self-contained true `
+    # 先清掉旧的 dist\app，避免改名前的 WinUIDemo.exe 之类旧文件混进安装包
+    Remove-Item "dist\app" -Recurse -Force -ErrorAction SilentlyContinue
+    dotnet publish ArtkTools.csproj -c Release -r win-x64 --self-contained true `
         -p:WindowsAppSDKSelfContained=true -p:Platform=x64 -p:PublishReadyToRun=false `
         -p:Version=$Version -o dist\app -v m
     if ($LASTEXITCODE -ne 0) { throw "publish 失败" }
@@ -83,7 +83,24 @@ try {
         Copy-Item "NovaServer\data\*" "dist\server\data" -Recurse -Force
     }
 
-    # vpk 不允许同一版本重复打包，整个目录清掉；
+    # ── Artk Tools 安装包：Inno Setup（和 tubatools-master 同款向导） ────────
+    # 直接用 Inno 把 dist\app 的发布文件装到 Program Files，不再套 Velopack 的 Setup.exe；
+    # 卸载器、开始菜单 / 桌面快捷方式、完成页「运行 Artk Tools」都由 Inno 负责。
+    $iscc = @(
+        (Join-Path $env:LOCALAPPDATA "Programs\Inno Setup 6\ISCC.exe"),
+        (Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6\ISCC.exe"),
+        (Join-Path $env:ProgramFiles "Inno Setup 6\ISCC.exe")
+    ) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+
+    if (-not $iscc) {
+        $cmd = Get-Command ISCC.exe -ErrorAction SilentlyContinue
+        if ($cmd) { $iscc = $cmd.Source }
+    }
+
+    if (-not $iscc) {
+        throw "没有找到 Inno Setup 的 ISCC.exe，请先安装：winget install JRSoftware.InnoSetup"
+    }
+
     # 上一版安装包可能正被 Windows 扫描或用户双击着，删不掉就换个名字让路，别把整个流程卡死
     if (Test-Path $OutDir) {
         try {
@@ -95,51 +112,24 @@ try {
             Write-Host "    旧目录被占用，已改名为 $parked" -ForegroundColor Yellow
         }
     }
+    New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 
-    Write-Host "==> 生成安装包（版本 $Version）" -ForegroundColor Cyan
-    vpk pack -u $PackId -v $Version -p dist\app -e WinUIDemo.exe -r win-x64 `
-        -i Assets\app.ico --packTitle $Title --packAuthors $Title `
-        --delta None -o $OutDir
-    if ($LASTEXITCODE -ne 0) { throw "vpk pack 失败" }
+    Write-Host "==> 编译 Inno Setup 安装包（版本 $Version）" -ForegroundColor Cyan
+    & $iscc "/DMyAppVersion=$Version" "installer.iss"
+    if ($LASTEXITCODE -ne 0) { throw "ISCC 编译失败" }
 
-    # 版本没传进去会导致「装了新版还是显示已安装、只能修复」，这里直接卡住
-    $nupkg = Join-Path $OutDir "$PackId-$Version-full.nupkg"
-    if (-not (Test-Path $nupkg)) {
-        $actual = Get-ChildItem $OutDir -Filter "*-full.nupkg" | Select-Object -First 1
-        throw "生成的包版本不对：期望 $Version，实际 $($actual.Name)"
-    }
-
-    # 二次封装：把 vpk 生成的 Setup.exe 内嵌进 Artk Tools 自定义安装向导。
-    # 向导提供：自定义安装路径 / 是否创建桌面快捷方式 / 安装后立即打开；
-    # 真正的安装仍由内嵌的 Velopack Setup 静默完成（保留更新与卸载链路）。
-    Write-Host "==> 构建自定义安装向导" -ForegroundColor Cyan
-    $innerSetup = Join-Path $OutDir "$PackId-win-Setup.exe"
-    $payloadDir = "Installer\payload"
-    New-Item -ItemType Directory -Force -Path $payloadDir | Out-Null
-    Get-ChildItem $payloadDir -Filter "*-win-Setup.exe" -ErrorAction SilentlyContinue | Remove-Item -Force
-    Copy-Item $innerSetup (Join-Path $payloadDir "$ArtifactName-win-Setup.exe") -Force
-
-    Remove-Item "dist\setupgen" -Recurse -Force -ErrorAction SilentlyContinue
-    dotnet publish Installer\Installer.csproj -c Release -r win-x64 --self-contained true `
-        -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
-        -p:EnableCompressionInSingleFile=true -p:DebugType=None -p:DebugSymbols=false `
-        -p:Version=$Version -o dist\setupgen -v m
-    if ($LASTEXITCODE -ne 0) { throw "安装向导 publish 失败" }
-
-    # 对外文件名用 ArtkTools（内部 packId 仍是 NovaWorkbench，更新链 / 卸载项靠它认）
     $finalSetup = Join-Path $OutDir "$ArtifactName-win-Setup.exe"
-    Copy-Item "dist\setupgen\NovaSetup.exe" $finalSetup -Force
-    Remove-Item $innerSetup -Force -ErrorAction SilentlyContinue
-    Write-Host "    已用自定义安装向导替换 Setup.exe" -ForegroundColor Gray
+    if (-not (Test-Path $finalSetup)) { throw "ISCC 没有生成 $finalSetup" }
 
-    # 便携版也改名（vpk 按 packId 命名）
-    $innerZip = Join-Path $OutDir "$PackId-win-Portable.zip"
+    # 便携版：直接压缩发布目录（绿色解压即用，不经过安装器）
+    Write-Host "==> 生成便携版 zip" -ForegroundColor Gray
     $finalZip = Join-Path $OutDir "$ArtifactName-win-Portable.zip"
-    if (Test-Path $innerZip) {
-        Move-Item $innerZip $finalZip -Force
-    }
+    Remove-Item $finalZip -Force -ErrorAction SilentlyContinue
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [System.IO.Compression.ZipFile]::CreateFromDirectory(
+        (Resolve-Path "dist\app").Path, $finalZip, [System.IO.Compression.CompressionLevel]::Optimal, $false)
 
-    # ── Artk Server 安装包（和 Artk Tools 一样的 Velopack + 自定义向导） ──────────
+    # ── Artk Server 安装包（Velopack + 自定义向导，和客户端共用一套向导代码） ──────────
     Write-Host "==> 生成 Artk Server 安装包（版本 $Version）" -ForegroundColor Cyan
 
     if (Test-Path $ServerOutDir) {

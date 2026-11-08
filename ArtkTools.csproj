@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>ArtkTools</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x64;ARM64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <UseWinUI>true</UseWinUI>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <!-- LinkGrabber / NovaServer / 安装向导是独立工程，dist 是打包产物，_ref 是参考源码，别被主工程收进来 -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);LinkGrabber\**;NovaServer\**;Installer\**;ServerSetup\**;dist\**;_ref\**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\app.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\ArtkTools.png" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Winapp2 清理规则数据库（CC-BY-SA-4.0），随程序一起输出 -->
+    <None Update="Assets\Winapp2.ini" CopyToOutputDirectory="PreserveNewest" />
+    <!-- 国产软件补充清理规则 -->
+    <None Update="Assets\CleanerExtra.ini" CopyToOutputDirectory="PreserveNewest" />
+    <!-- DirectX 修复 DLL（移植自 DirectX Repair 的 Data\A/B，x86 进 SysWOW64、x64 进 System32） -->
+    <Content Include="Assets\DirectXRepair\**\*.dll"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <!-- Geek 卸载器：电脑工具页「Geek 卸载」卡片直接启动随包分发的 exe -->
+    <None Update="geek.exe" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <!-- 只引用 WinUI 这座「分体包」，不带元包里的 AI / ML / Search，发布体积小约 50 MB -->
+    <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="2.3.9" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.InteractiveExperiences" Version="2.1.9" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Runtime" Version="2.5.1" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3719.77" />
+    <PackageReference Include="System.Drawing.Common" Version="10.0.13" />
+    <PackageReference Include="System.Management" Version="10.0.0" />
+    <PackageReference Include="Velopack" Version="1.2.161" />
+  </ItemGroup>
+
+</Project>
