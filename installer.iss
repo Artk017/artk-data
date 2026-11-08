@@ -1,14 +1,3 @@
-; Artk Tools 安装包 —— 和 tubatools-master 同款（Inno Setup 6 modern 向导）
-;
-; 构建（在仓库根目录）：
-;   "C:\Users\<你>\AppData\Local\Programs\Inno Setup 6\ISCC.exe" /DMyAppVersion=1.2.3 installer.iss
-; build-installer.ps1 会自动先发布到 dist\app，再调用 ISCC。
-;
-; 产物：dist\release\ArtkTools-win-Setup.exe
-;
-; 安装内容：dist\app 下的自包含发布文件（.NET / Windows App SDK 已打进去），
-; 安装到 Program Files，自带卸载器、开始菜单 / 桌面快捷方式、完成页「运行 Artk Tools」。
-
 #define MyAppName "Artk Tools"
 #ifndef MyAppVersion
   #define MyAppVersion "1.0.0"

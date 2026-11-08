@@ -14,4 +14,5 @@ NovaServer/data/
 
 # 临时参考材料 / 测试产物
 _ref/
+.screenshots/
 *.log

@@ -9,9 +9,6 @@
     </application>
   </compatibility>
 
-  <!-- 和 tubatools-master 的 Launcher 等价：启动即要求管理员，UAC 只弹一次，
-       主程序随后直接以管理员身份运行。SATA / IDE 硬盘的 SMART 需要管理员权限
-       （DFP_RECEIVE_DRIVE_DATA），这样读出来的属性与阈值才完整准确。 -->
   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
     <security>
       <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
