@@ -4,7 +4,7 @@
 # 首次初始化只拉取提交和目录树（blob:none），不重复下载已经存在的文件内容。
 [CmdletBinding()]
 param(
-    [string]$Source    = $PSScriptRoot,
+    [string]$Source    = "",
     [string]$Remote    = "https://github.com/Artk017/artk-data.git",
     [string]$Branch    = "main",
     [string]$UserName  = "Artk017",
@@ -17,6 +17,16 @@ $env:GIT_AUTHOR_NAME = $UserName
 $env:GIT_AUTHOR_EMAIL = $UserEmail
 $env:GIT_COMMITTER_NAME = $UserName
 $env:GIT_COMMITTER_EMAIL = $UserEmail
+
+# PowerShell 5.1 在参数默认值里取不到 $PSScriptRoot，进脚本后再补上
+if ([string]::IsNullOrWhiteSpace($Source)) {
+    if ($PSScriptRoot) {
+        $Source = $PSScriptRoot
+    }
+    else {
+        $Source = (Get-Location).Path
+    }
+}
 
 function Say([string]$Text, [string]$Color = 'Gray') {
     Write-Host $Text -ForegroundColor $Color
